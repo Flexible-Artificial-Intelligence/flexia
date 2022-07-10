@@ -1,5 +1,10 @@
-from .logger import Logger
+import logging
+
+from . import Logger
 from .utils import get_logger, format_metrics
+
+
+logger = logging.getLogger(__name__)
 
 
 class LoggingLogger(Logger):
@@ -8,7 +13,8 @@ class LoggingLogger(Logger):
                  path="logs.log", 
                  logs_format:str="%(message)s", 
                  verbose:int=1, 
-                 decimals=4) -> None:
+                 decimals=4, 
+                 level=logging.INFO) -> None:
 
         super().__init__()
 
@@ -17,13 +23,15 @@ class LoggingLogger(Logger):
         self.logs_format = logs_format
         self.verbose = verbose
         self.decimals = decimals
+        self.level = level
 
         self.logger = None
 
-    def on_init(self, trainer):
+    def on_training_start(self, trainer):
         self.logger = get_logger(name=self.name, 
                                  logs_format=self.logs_format, 
-                                 path=self.path) 
+                                 path=self.path, 
+                                 level=self.level) 
 
     def on_training_step_end(self, trainer):
         step = trainer.history["step_epoch"]

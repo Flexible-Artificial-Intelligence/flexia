@@ -4,14 +4,20 @@ from torch.cuda.amp import autocast
 from typing import Optional, Union, Any
 from torch.utils.data import DataLoader
 import numpy as np
+from abc import ABC, abstractmethod
+import logging
 
-from ..timer import Timer
+
+from .. import Timer
 from .enums import InferencerStates
 from ..third_party.addict import Dict
 from ..utils import initialize_device
 
 
-class Inferencer:
+logger = logging.getLogger(__name__)
+
+
+class Inferencer(ABC):
     def __init__(self, 
                  model:nn.Module, 
                  device:Optional[Union[str, torch.device]]="cpu", 
@@ -56,8 +62,9 @@ class Inferencer:
         self.__runner(instances=self.callbacks)
         self.__runner(instances=self.loggers)
 
+    @abstractmethod
     def prediction_step(self, batch:Any):
-        raise NotImplementedError(f"`prediction_step` function is not implemented.")
+        pass
         
     def __call__(self, loader:DataLoader):
         self.loader = loader      

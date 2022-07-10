@@ -4,12 +4,17 @@ import os
 import gc
 import numpy as np
 from typing import  Union
+import logging
 
-from .callback import Callback
+
+from . import Callback
 from ..utils import save_checkpoint
 from ..trainer.trainer_enums import TrainingStates
-from .utils import get_delta_value, compare
+from ..utils import get_delta_value, compare
 from .enums import Modes
+
+
+logger = logging.Logger(__name__)
 
 
 class ModelCheckpoint(Callback):  
@@ -135,7 +140,8 @@ class ModelCheckpoint(Callback):
             
             improvement_delta = abs(value - self.best_value)
             message = f"'best_value' is improved by {improvement_delta}! New 'best_value': {value}. Checkpoint path: '{checkpoint_path}'."
-            
+            logger.info(message)
+
             self.append_candidate(value=value, path=checkpoint_path)
             
             self.best_value = value

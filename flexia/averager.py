@@ -1,6 +1,11 @@
 from typing import Union, Optional
 from copy import deepcopy
+import logging
+
 from .third_party.addict import Dict
+
+
+logger = logging.getLogger(__name__)
 
 
 class Averager:

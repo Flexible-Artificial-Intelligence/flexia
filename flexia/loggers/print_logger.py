@@ -1,9 +1,14 @@
-from .logger import Logger
+import logging
+
+from . import Logger
 from .utils import format_metrics
 
 
+logger = logging.getLogger(__name__)
+
+
 class PrintLogger(Logger):
-    def __init__(self, verbose:int=1, decimals=4) -> None:
+    def __init__(self, verbose:int=1, decimals:int=4) -> None:
         super().__init__()
 
         self.verbose = verbose

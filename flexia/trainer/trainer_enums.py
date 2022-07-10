@@ -1,5 +1,6 @@
-from ..enums import ExplicitEnum
 from enum import Enum
+
+from ..enums import ExplicitEnum
 
 
 class ValidationStrategy(ExplicitEnum):

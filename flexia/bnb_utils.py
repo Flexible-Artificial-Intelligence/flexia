@@ -1,5 +1,5 @@
 from torch import nn
-from ..import_utils import is_bitsandbytes_available
+from .import_utils import is_bitsandbytes_available
 
 
 if is_bitsandbytes_available():

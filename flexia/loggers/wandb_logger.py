@@ -1,5 +1,10 @@
-from .logger import Logger
 import wandb
+import logging
+
+from . import Logger
+
+
+logger = logging.getLogger(__name__)
 
 
 class WANDBLogger(Logger):
@@ -9,7 +14,7 @@ class WANDBLogger(Logger):
 
     def on_training_start(self, trainer):
         wandb.init(**self.kwargs)
-        print(f"Weights & Biases Run URL: {wandb.run.get_url()}")
+        logger.info(f"Weights & Biases Run URL: {wandb.run.get_url()}")
 
     def on_training_step_end(self, trainer):
         logs = {

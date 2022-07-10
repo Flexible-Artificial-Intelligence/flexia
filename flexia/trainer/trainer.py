@@ -5,16 +5,20 @@ from torch.optim import lr_scheduler
 from typing import Optional, Union, Any, Tuple
 from torch.utils.data import DataLoader
 import numpy as np
-
+from abc import ABC, abstractmethod
+import logging
 
 from ..third_party.addict import Dict
 from .trainer_enums import SchedulingStrategy, ValidationStrategy, TrainingStates
 from ..timer import Timer
 from ..averager import Averager
 from ..utils import get_lr, initialize_device
+from ..loggers import LoggingLogger
 
 
-class Trainer:
+logger = logging.getLogger(__name__)
+
+class Trainer(ABC):
     def __init__(self, 
                  model:nn.Module, 
                  optimizer:optim.Optimizer,
@@ -30,7 +34,7 @@ class Trainer:
                  device:Optional[Union[str, torch.device]]="cpu", 
                  validation_strategy:str="epoch",
                  validation_steps:int=1, 
-                 loggers=[], 
+                 loggers=None, 
                  epochs:int=1, 
                  time_format:str="{hours}:{minutes}:{seconds}", 
                  callbacks=[]) -> None:
@@ -72,6 +76,14 @@ class Trainer:
 
         if self.gradient_scaling and self.scaler is None and self.amp:
             self.scaler = GradScaler()
+
+        if self.loggers is None:
+            self.loggers = [
+                LoggingLogger(name="trainer_logger", 
+                              path="training_logs.log", 
+                              verbose=1, 
+                              decimals=4)
+            ]
 
         self.best_validation_loss, self.best_validation_metrics, self.best_validation_outputs = None, None, None
         self.history = Dict({
@@ -369,10 +381,11 @@ class Trainer:
 
         return (loss.average, metrics.average, outputs)
 
+    @abstractmethod
     def compute_loss(self, 
                       batch:Any, 
                       return_outputs:bool=True) -> torch.Tensor:
-        raise NotImplementedError(f"`compute_loss` function is not implemented.")
+        pass
     
     def compute_metrics(self, batch:Any, predictions:Any) -> dict:
         return {}

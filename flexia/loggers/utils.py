@@ -1,25 +1,29 @@
 import logging
 
 
-def get_logger(name="logger", path="logs.log", logs_format="[%(asctime)s][%(levelname)s]: %(message)s") -> logging.Logger:
+def get_logger(name=__name__, 
+               path="logs.log", 
+               logs_format="%(message)s", 
+               stream_handler=False, 
+               level=logging.INFO) -> logging.Logger:
+
     logger = logging.getLogger(name)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(level)
     formatter = logging.Formatter(logs_format)
 
     if path is not None:
         file_handler = logging.FileHandler(name)
-        file_handler.setLevel(logging.INFO)
+        file_handler.setLevel(level)
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
 
-    stream_handler = logging.StreamHandler()
-    stream_handler.setLevel(logging.INFO)
-    stream_handler.setFormatter(formatter)
+    if stream_handler:
+        stream_handler = logging.StreamHandler()
+        stream_handler.setLevel(level)
+        stream_handler.setFormatter(formatter)
+        logger.addHandler(stream_handler)
+        
 
-    logger.addHandler(stream_handler)
-        
-    logger.propagate = False
-        
     return logger
 
 

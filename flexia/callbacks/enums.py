@@ -1,4 +1,4 @@
-from ..enums import ExplicitEnum
+from .enums import ExplicitEnum
 
 
 class Modes(ExplicitEnum):

@@ -7,12 +7,14 @@ import numpy as np
 from typing import Any, Union, Optional
 import random
 import os
-
+import logging
 
 from .import_utils import is_transformers_available, is_bitsandbytes_available
 from .exceptions import LibraryException
 from .enums import SchedulerLibraries, OptimizerLibraries
 
+
+logger = logging.getLogger(__name__)
 
 if is_transformers_available():
     import transformers

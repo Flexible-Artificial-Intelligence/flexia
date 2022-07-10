@@ -1,11 +1,13 @@
 from typing import Union
 from datetime import timedelta
+import logging
 
-
-from .callback import Callback
+from ..callbacks import Callback
 from ..third_party.pytimeparse.timeparse import timeparse
 from ..trainer.trainer_enums import TrainingStates
 
+
+logger = logging.Logger(__name__)
 
 class Timing(Callback):
     def __init__(self, 
@@ -45,5 +47,9 @@ class Timing(Callback):
         
     def check(self, elapsed) -> bool:       
         stop = elapsed > self.duration
+        
+        if stop:
+            case = "The time reaches duration limit."
+            logger.info(case)
         
         return stop

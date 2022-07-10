@@ -1,11 +1,14 @@
-from tkinter.tix import MAX
 from typing import Callable, Union, Optional
 import numpy as np
+import logging
 
 from ..trainer.trainer_enums import TrainingStates
-from .callback import Callback
+from . import Callback
 from .utils import compare, get_delta_value
 from .enums import Modes
+
+
+logger = logging.Logger(__name__)
 
 
 class EarlyStopping(Callback):   
@@ -45,6 +48,7 @@ class EarlyStopping(Callback):
 
         if self.stop:
             trainer.state = TrainingStates.TRAINING_STOP
+            logger.info(self.case)
 
     
     def check(self, value) -> bool:               
@@ -60,7 +64,6 @@ class EarlyStopping(Callback):
                 if compare(value=self.stopping_threshold, other=delta_value, mode=self.mode):
                     self.stop = True
                     self.case = f"Monitored value reached `stopping_threshold`. Value: {self.value}. Stopping threshold: {self.stopping_threshold}."
-            
             
             if compare(value=delta_value, other=self.best_value, mode=self.mode):
                 improvement_delta = abs(value - self.best_value)

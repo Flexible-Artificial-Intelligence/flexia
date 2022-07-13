@@ -13,8 +13,8 @@
 # limitations under the License.
 
 
-from ..trainer import Trainer
-from ..inferencer import Inferencer
+from ..trainer.trainer import Trainer
+from ..inferencer.inferencer import Inferencer
 
 
 class Logger:    

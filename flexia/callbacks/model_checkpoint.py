@@ -22,7 +22,7 @@ from typing import  Union
 import logging
 
 
-from . import Callback
+from .callback import Callback
 from ..utils import save_checkpoint
 from ..trainer.trainer_enums import TrainingStates
 from ..utils import get_delta_value, compare

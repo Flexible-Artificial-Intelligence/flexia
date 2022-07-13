@@ -13,12 +13,12 @@
 # limitations under the License.
 
 
-from typing import Callable, Union, Optional
+from typing import  Union, Optional
 import numpy as np
 import logging
 
 from ..trainer.trainer_enums import TrainingStates
-from . import Callback
+from .callback import Callback
 from .utils import compare, get_delta_value
 from .enums import Modes
 

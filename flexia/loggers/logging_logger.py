@@ -15,7 +15,7 @@
 
 import logging
 
-from . import Logger
+from .logger import Logger
 from .utils import get_logger, format_metrics
 
 

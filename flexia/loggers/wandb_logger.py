@@ -16,7 +16,7 @@
 import wandb
 import logging
 
-from . import Logger
+from .logger import Logger
 
 
 logger = logging.getLogger(__name__)

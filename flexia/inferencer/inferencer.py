@@ -23,7 +23,7 @@ from abc import ABC, abstractmethod
 import logging
 
 
-from .. import Timer
+from ..timer import Timer
 from .enums import InferencerStates
 from ..third_party.addict import Dict
 from ..utils import initialize_device

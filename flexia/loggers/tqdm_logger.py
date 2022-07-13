@@ -17,7 +17,7 @@ from tqdm import tqdm
 from tqdm.notebook import tqdm as notebook_tqdm
 import logging
 
-from . import Logger
+from .logger import Logger
 from .utils import format_metrics
 
 

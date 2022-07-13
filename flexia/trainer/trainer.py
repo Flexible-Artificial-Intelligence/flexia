@@ -17,7 +17,7 @@ import torch
 from torch import nn, optim
 from torch.cuda.amp import GradScaler, autocast
 from torch.optim import lr_scheduler
-from typing import Optional, Union, Any, Tuple
+from typing import Optional, Union, Any, Tuple, List
 from torch.utils.data import DataLoader
 import numpy as np
 from abc import ABC, abstractmethod
@@ -27,6 +27,8 @@ from ..third_party.addict import Dict
 from .trainer_enums import SchedulingStrategy, ValidationStrategy, TrainingStates
 from ..timer import Timer
 from ..averager import Averager
+from ..loggers import Logger
+from ..callbacks import Callback
 from ..utils import get_lr, initialize_device
 from ..loggers import LoggingLogger
 
@@ -49,10 +51,10 @@ class Trainer(ABC):
                  device:Optional[Union[str, torch.device]]="cpu", 
                  validation_strategy:str="epoch",
                  validation_steps:int=1, 
-                 loggers=None, 
+                 loggers:Optional[List["Logger"]]=None, 
                  epochs:int=1, 
                  time_format:str="{hours}:{minutes}:{seconds}", 
-                 callbacks=[]) -> None:
+                 callbacks=Optional[List["Callback"]]) -> None:
         
         self.model = model
         self.teacher_model = teacher_model
@@ -114,7 +116,7 @@ class Trainer(ABC):
         self._state = TrainingStates.INIT
         self.state = self._state
 
-    def __runner(self, instances=None):
+    def __runner(self, instances:Optional[List[Union["Callback", "Logger"]]]=None) -> None:
         def run(instance):
             method = getattr(instance, self.state.value)
             method(self)

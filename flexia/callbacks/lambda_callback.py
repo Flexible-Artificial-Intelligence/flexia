@@ -18,6 +18,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class LambdaCallback:
     def __init__(self, 
                  on_init=lambda trainer: None, 

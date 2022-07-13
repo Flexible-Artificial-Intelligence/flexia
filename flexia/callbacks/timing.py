@@ -17,7 +17,7 @@ from typing import Union
 from datetime import timedelta
 import logging
 
-from ..callbacks import Callback
+from .callback import Callback
 from ..third_party.pytimeparse.timeparse import timeparse
 from ..trainer.trainer_enums import TrainingStates
 

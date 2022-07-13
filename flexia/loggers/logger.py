@@ -110,7 +110,7 @@ class Logger:
         Called when the training loop stops.
         """
 
-        pass
+        self.on_training_end(trainer=trainer)
 
     def on_checkpoint_save(self, trainer) -> None:
         """

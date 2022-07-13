@@ -29,7 +29,7 @@ from .utils import get_delta_value, compare
 from .enums import Modes
 
 
-logger = logging.Logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class ModelCheckpoint(Callback):  

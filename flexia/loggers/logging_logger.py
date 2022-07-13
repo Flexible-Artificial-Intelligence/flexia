@@ -94,4 +94,4 @@ class LoggingLogger(Logger):
 
         if step % self.verbose == 0 or step == steps and self.verbose > 0:
             log_message = f"[Prediction] {step}/{steps} - elapsed: {elapsed} - remain: {remain}"
-            print(log_message)
+            self.logger.info(log_message)

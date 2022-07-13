@@ -19,7 +19,7 @@ import logging
 def get_logger(name=__name__, 
                path="logs.log", 
                logs_format="%(message)s", 
-               stream_handler=False, 
+               stream_handler=True, 
                level=logging.INFO) -> logging.Logger:
 
     logger = logging.getLogger(name)

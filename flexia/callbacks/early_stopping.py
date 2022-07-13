@@ -23,7 +23,7 @@ from .utils import compare, get_delta_value
 from .enums import Modes
 
 
-logger = logging.Logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class EarlyStopping(Callback):   

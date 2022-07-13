@@ -138,8 +138,8 @@ class Trainer(ABC):
         if self.state != TrainingStates.TRAINING_STOP:
             self._state = value
 
-        self.__runner(instances=self.callbacks)
         self.__runner(instances=self.loggers)
+        self.__runner(instances=self.callbacks)
     
     def train(self, 
               train_loader:DataLoader, 

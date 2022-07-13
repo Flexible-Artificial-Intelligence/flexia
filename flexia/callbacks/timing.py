@@ -22,7 +22,7 @@ from ..third_party.pytimeparse.timeparse import timeparse
 from ..trainer.trainer_enums import TrainingStates
 
 
-logger = logging.Logger(__name__)
+logger = logging.getLogger(__name__)
 
 class Timing(Callback):
     def __init__(self, 

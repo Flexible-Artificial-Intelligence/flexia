@@ -29,7 +29,7 @@ class WANDBLogger(Logger):
 
     def on_training_start(self, trainer):
         wandb.init(**self.kwargs)
-        logger.info(f"Weights & Biases Run URL: {wandb.run.get_url()}")
+        print(f"Weights & Biases Run URL: {wandb.run.get_url()}")
 
     def on_training_step_end(self, trainer):
         logs = {

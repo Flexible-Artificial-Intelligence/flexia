@@ -71,8 +71,8 @@ class LoggingLogger(Logger):
         if step % self.verbose == 0 or step == steps and self.verbose > 0:
             loss = trainer.history["validation_loss"]
             metrics = trainer.history["validation_metrics"]
-            elapsed = trainer.history["elapsed_epoch"]
-            remain = trainer.history["remain_epoch"]
+            elapsed = trainer.history["validation_elapsed"]
+            remain = trainer.history["validation_remain"]
             
             metrics_string = format_metrics(metrics=metrics.average, decimals=self.decimals)
             log_message = f"[Validation] {step}/{steps} - elapsed: {elapsed} - remain: {remain} - loss: {loss:.{self.decimals}}{metrics_string}"

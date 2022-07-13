@@ -183,7 +183,7 @@ class Trainer(ABC):
             
             self.state = TrainingStates.EPOCH_START
 
-            self.model.zero_grad()
+            self.model.zero_grad(set_to_none=True)
             for step, batch in enumerate(self.train_loader, 1):
                 self.history["step"] += 1
                 self.history["step_epoch"] = step
@@ -295,7 +295,7 @@ class Trainer(ABC):
         else:
             self.optimizer.step()
 
-        self.model.zero_grad()
+        self.model.zero_grad(set_to_none=True)
         
 
     def scheduling_step(self, loss:Optional[torch.Tensor]=None, loop:str="training") -> None:

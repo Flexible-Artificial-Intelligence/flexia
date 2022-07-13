@@ -13,4 +13,4 @@
 # limitations under the License.
 
 
-from .trainer import Trainer
+from trainer import Trainer

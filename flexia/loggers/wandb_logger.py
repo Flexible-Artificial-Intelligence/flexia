@@ -23,11 +23,15 @@ logger = logging.getLogger(__name__)
 
 
 class WANDBLogger(Logger):
-    def __init__(self, finish=True, **kwargs):
+    def __init__(self, api_key=None, finish=True, **kwargs):
+        self.api_key = api_key
         self.finish = finish
         self.kwargs = kwargs
 
     def on_training_start(self, trainer):
+        if self.api_key is not None:
+            wandb.login(key=self.api_key)
+
         wandb.init(**self.kwargs)
         print(f"Weights & Biases Run URL: {wandb.run.get_url()}")
 

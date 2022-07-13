@@ -74,7 +74,7 @@ class LoggingLogger(Logger):
             elapsed = trainer.history["validation_elapsed"]
             remain = trainer.history["validation_remain"]
             
-            metrics_string = format_metrics(metrics=metrics.average, decimals=self.decimals)
+            metrics_string = format_metrics(metrics=metrics, decimals=self.decimals)
             log_message = f"[Validation] {step}/{steps} - elapsed: {elapsed} - remain: {remain} - loss: {loss:.{self.decimals}}{metrics_string}"
             self.logger.info(log_message)
 

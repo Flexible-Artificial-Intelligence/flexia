@@ -63,7 +63,7 @@ class EarlyStopping(Callback):
 
         if self.stop:
             trainer.state = TrainingStates.TRAINING_STOP
-            logger.info(self.case)
+            print(self.case)
 
     
     def check(self, value) -> bool:               

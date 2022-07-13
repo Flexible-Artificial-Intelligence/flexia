@@ -155,7 +155,7 @@ class ModelCheckpoint(Callback):
             
             improvement_delta = abs(value - self.best_value)
             message = f"'best_value' is improved by {improvement_delta}! New 'best_value': {value}. Checkpoint path: '{checkpoint_path}'."
-            logger.info(message)
+            print(message)
 
             self.append_candidate(value=value, path=checkpoint_path)
             

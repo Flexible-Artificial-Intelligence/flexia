@@ -78,9 +78,6 @@ class ModelCheckpoint(Callback):
             else:
                 raise NotADirectoryError(f"'{self.directory}' is not directory.")
         
-        if self.filename_format.count(".") > 1:
-            raise ValueError(f"'filename_format' must not has '.' in filename, but given '{self.filename_format}'.")
-        
         self.all_candidates = []
     
     
@@ -99,7 +96,7 @@ class ModelCheckpoint(Callback):
                 shutil.rmtree(path)
     
     
-    def append_candidate(self, path:str, value:Union[float, torch.Tensor, int]) -> None:   
+    def append_candidate(self, path:str) -> None:   
         """
         Appends new candidate.
         """
@@ -107,27 +104,24 @@ class ModelCheckpoint(Callback):
         if not os.path.exists(path):
             raise FileNotFoundError("`path` does not exist.")
         
-        self.all_candidates.append([path, value])
+        self.all_candidates.append(path)
         
     
     def __select_candidates(self) -> None:
         """
         Deleted not selected candidates.
         """
-        if self.num_candidates != "all":
-            if len(self.all_candidates) >= self.num_candidates:
-                selected_candidates = self.all_candidates[-self.num_candidates:]
-                deleted_candidates = 0
-                for candidate in self.all_candidates:
-                    if candidate not in selected_candidates:
-                        path, value = candidate
-                        
-                        if os.path.exists(path):
-                            os.remove(path)
+        if len(self.all_candidates) > self.num_candidates:
+            selected_candidates = self.all_candidates[-self.num_candidates:]
+            deleted_candidates = 0
+            for candidate_path in self.all_candidates:
+                if candidate_path not in selected_candidates:                        
+                    if os.path.exists(candidate_path):
+                        os.remove(candidate_path)
 
-                        deleted_candidates += 1
+                    deleted_candidates += 1
                 
-                self.all_candidates = self.all_candidates[-self.num_candidates:]
+            self.all_candidates = self.all_candidates[-self.num_candidates:]
                 
             
     def format_filename(self, trainer) -> str:
@@ -157,7 +151,7 @@ class ModelCheckpoint(Callback):
             message = f"'best_value' is improved by {improvement_delta}! New 'best_value': {value}. Checkpoint path: '{checkpoint_path}'."
             print(message)
 
-            self.append_candidate(value=value, path=checkpoint_path)
+            self.append_candidate(checkpoint_path)
             
             self.best_value = value
             trainer.history["best_checkpoint_path"] = checkpoint_path

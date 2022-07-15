@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 class Inferencer(ABC):
     def __init__(self, 
                  model:nn.Module, 
-                 device:Optional[Union[str, torch.device]]="cpu", 
+                 device="cpu", 
                  amp:bool=False, 
                  loggers:Union[str, list]=[],
                  callbacks=[], 

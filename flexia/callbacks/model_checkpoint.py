@@ -71,10 +71,8 @@ class ModelCheckpoint(Callback):
                 raise FileNotFoundError(f"Directory '{self.directory}' does not exist.")
         else:
             if os.path.isdir(self.directory):
-                possible_checkpoints = os.listdir(self.directory)
-                if len(possible_checkpoints) > 0:
-                    if self.overwriting:
-                        self.__remove_files_from_directory(self.directory)
+                if self.overwriting:
+                    self.__remove_files_from_directory(self.directory)
             else:
                 raise NotADirectoryError(f"'{self.directory}' is not directory.")
         
@@ -144,8 +142,6 @@ class ModelCheckpoint(Callback):
                                          path=checkpoint_path, 
                                          step=trainer.history["step"], 
                                          epoch=trainer.history["epoch"])
-            
-            torch.save(checkpoint, checkpoint_path)
             
             improvement_delta = abs(value - self.best_value)
             message = f"'best_value' is improved by {improvement_delta}! New 'best_value': {value}. Checkpoint path: '{checkpoint_path}'."

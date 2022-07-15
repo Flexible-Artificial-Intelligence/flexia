@@ -42,11 +42,13 @@ class Inferencer(ABC):
                  time_format:str="{hours}:{minutes}:{seconds}"):
 
         self.model = model
-        self.device = initialize_device(device)
+        self.device = device
         self.amp = amp
         self.time_format = time_format
         self.callbacks = callbacks
         self.loggers = loggers
+
+        self.device = initialize_device(self.device)
 
         self.loader = None
         self._state = InferencerStates.INIT

@@ -22,10 +22,9 @@ import numpy as np
 from abc import ABC, abstractmethod
 import logging
 
-
+from ..third_party.addict import Dict
 from ..timer import Timer
 from .enums import InferencerStates
-from ..third_party.addict import Dict
 from ..utils import initialize_device
 
 

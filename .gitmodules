@@ -1,3 +1,0 @@
-[submodule "addict"]
-	path = torch_components/third_party/addict
-	url = https://github.com/mewwts/addict.git

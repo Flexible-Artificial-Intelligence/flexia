@@ -23,7 +23,6 @@ import numpy as np
 from abc import ABC, abstractmethod
 import logging
 
-from ..third_party.addict import Dict
 from .trainer_enums import SchedulingStrategy, ValidationStrategy, TrainingStates
 from ..timer import Timer
 from ..averager import Averager
@@ -31,6 +30,7 @@ from ..loggers import Logger
 from ..callbacks import Callback
 from ..utils import get_lr, initialize_device
 from ..loggers import LoggingLogger
+from ..third_party.addict import Dict
 
 
 logger = logging.getLogger(__name__)

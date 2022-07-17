@@ -18,7 +18,6 @@ from datetime import timedelta
 import logging
 
 from .callback import Callback
-from ..third_party.pytimeparse.timeparse import timeparse
 from ..trainer.trainer_enums import TrainingStates
 
 
@@ -35,13 +34,9 @@ class Timing(Callback):
         self.duration_separator = duration_separator
 
         if isinstance(self.duration, str):
-            try:
-                duration_values = self.duration.strip().split(self.duration_separator)
-                duration_values = tuple([int(value) for value in duration_values])
-                days, hours, minutes, seconds = duration_values 
-            except:
-                seconds = timeparse(self.duration)
-                days, hours, minutes = 0, 0, 0
+            duration_values = self.duration.strip().split(self.duration_separator)
+            duration_values = tuple([int(value) for value in duration_values])
+            days, hours, minutes, seconds = duration_values 
             
             self.duration = timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)
 

@@ -70,10 +70,10 @@ Flexia has communication channels in some popular social networks. There you can
     - [x] Early Stopping
     - [x] Timing
     - [x] Lambda
-- [ ] Inferencer
+- [x] Inferencer
 - [ ] Torch XLA
 - [ ] Examples
-    - [x] Digit Recognizer
+    - [ ] Digit Recognizer
     - [ ] Global Wheat Detection
     - [ ] Carvana Image Masking Challenge
 - [ ] Tests

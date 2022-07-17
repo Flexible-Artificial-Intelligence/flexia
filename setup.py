@@ -1,32 +1,29 @@
-import os
 from setuptools import setup, find_packages
 
 
-NAME = "flexia"
-DESCRIPTION = """Flexia (Flexible Artificial Intelligence) is an open-source library, which provides high-level functionality for developing accurate Deep Learning models. There is a variety of methods for controlling (e.g Early Stopping, Model Checkpointing, Timing, etc.) and monitoring (e.g Weights & Biases, Print, Logging, and Taqadum) training, validation, and inferencing loops respectively."""
-VERSION = "1.0.0"
-AUTHOR = "Vadim Irtlach"
-AUTHOR_EMAIL = "vadimirtlach@gmail.com"
-URL = "https://github.com/vad13irt/flexia"
-REQUIRED = ["pytimeparse", "numpy", "torch"]
-PACKAGES = find_packages("flexia", "flexia/*")
-
-DIRECTORY = os.getcwd()
-README_PATH = os.path.join(DIRECTORY, "README.md")
-
-with open(README_PATH, "r", encoding="utf-8") as readme:
-    README = str(readme.read())
+install_requires = ["tqdm", "numpy", "wandb", "torch", "transformers"]
 
 setup(
-    name=NAME,
-    version=VERSION,
-    description=DESCRIPTION,
-    long_description=README,
+    name="flexia",
+    version="1.0.3",
+    description="Flexia (Flexible Artificial Intelligence) is an open-source library that provides a high-level API for developing accurate Deep Learning models for all kinds of Deep Learning tasks such as Classification, Regression, Object Detection, Image Segmentation, etc.",
+    author="Vadim Irtlach",
+    author_email="vadimirtlach@gmail.com",
+    long_description=open("README.md", "r", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
-    url=URL,
-    author=AUTHOR,
-    author_email=AUTHOR_EMAIL,
-    packages=PACKAGES,
-    include_package_data=True,
-    install_requires=REQUIRED,
+    license="Apache",
+    packages=find_packages("src"),
+    package_dir={"": "src"},
+    url="https://github.com/Flexible-Artificial-Intelligence/flexia",
+    keywords="python data-science machine-learning natural-language-processing library computer-vision deep-learning pytorch artificial-intelligence neural-networks",
+    python_requires=">=3.7.0",
+    install_requires=install_requires,
+    classifiers=[
+        "License :: OSI Approved :: Apache Software License",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+    ],
 )

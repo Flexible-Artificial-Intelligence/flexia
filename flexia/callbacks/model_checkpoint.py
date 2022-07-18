@@ -24,7 +24,7 @@ import logging
 
 from .callback import Callback
 from ..utils import save_checkpoint
-from ..trainer.trainer_enums import TrainingStates
+from ..trainer.enums import TrainerStates
 from .utils import get_delta_value, compare
 from .enums import Modes
 
@@ -165,7 +165,7 @@ class ModelCheckpoint(Callback):
     def on_validation_end(self, trainer):
         is_saved = self.check(trainer=trainer)
         if is_saved:
-            trainer.state = TrainingStates.CHECKPOINT_SAVE
+            trainer.state = TrainerStates.CHECKPOINT_SAVE
 
 
     def on_exception(self, exception, trainer):

@@ -1,4 +1,4 @@
-from .trainer_enums import TrainerStates
+from .enums import TrainerStates
 
 
 def exception_handler(function):

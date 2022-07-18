@@ -9,6 +9,7 @@ def exception_handler(function):
             return output
         except Exception as error:
             instance.state = TrainerStates.EXCEPTION
-            return error
+            instance.history["exception"] = error
+            return instance.history
 
     return handler

@@ -137,7 +137,7 @@ class Trainer(ABC):
 
     @state.setter
     def state(self, value):
-        if self.state != TrainerStates.TRAINING_STOP:
+        if self.state != TrainerStates.TRAINING_STOP or self.state != TrainerStates.EXCEPTION:
             self._state = value
 
         self.__runner(instances=self.loggers)
@@ -257,8 +257,8 @@ class Trainer(ABC):
 
                         del validation_outputs
 
-                if self.state == TrainerStates.TRAINING_STOP:
-                    return self.__return()
+                if self.state == TrainerStates.TRAINING_STOP or self.state == TrainerStates.EXCEPTION:
+                    return self.history
 
             if self.scheduling_strategy == SchedulingStrategy.EPOCH:
                 self.scheduling_step(loop="training")
@@ -267,7 +267,7 @@ class Trainer(ABC):
 
         self.state = TrainerStates.TRAINING_END
 
-        return self.__return()
+        return self.history
 
 
     def __update_history_data(self, data, key_format="train_{key}"):
@@ -276,9 +276,6 @@ class Trainer(ABC):
 
     def get_lr(self):
         return get_lr(optimizer=self.optimizer, only_last=True, key="lr")
-
-    def __return(self):
-        return self.history
 
     def backward_step(self, loss:torch.Tensor) -> torch.Tensor:
         if self.scaler is not None and self.amp:

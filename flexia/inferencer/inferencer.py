@@ -78,10 +78,11 @@ class Inferencer(ABC):
 
     @state.setter
     def state(self, value):
-        self._state = value
+        if self.state != InferencerStates.EXCEPTION:
+            self._state = value
 
-        self.__runner(instances=self.callbacks)
         self.__runner(instances=self.loggers)
+        self.__runner(instances=self.callbacks)
 
     @abstractmethod
     def prediction_step(self, batch:Any):

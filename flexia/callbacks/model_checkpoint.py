@@ -122,8 +122,8 @@ class ModelCheckpoint(Callback):
             self.all_candidates = self.all_candidates[-self.num_candidates:]
                 
             
-    def format_filename(self, trainer) -> str:
-        filename = self.filename_format.format(**trainer.history)            
+    def format_filename(self, filename_format="checkpoint.pth", data={}) -> str:
+        filename = filename_format.format(**data)            
         return filename
             
     def check(self, trainer) -> bool:
@@ -132,7 +132,7 @@ class ModelCheckpoint(Callback):
 
         is_saved = False
         if compare(value=delta_value, other=self.best_value, mode=self.mode) and self.num_candidates != 0:
-            checkpoint_filename = self.format_filename(trainer=trainer)
+            checkpoint_filename = self.format_filename(filename_format=self.filename_format, data=trainer.history)
             checkpoint_path = os.path.join(self.directory, checkpoint_filename)
             
             checkpoint = save_checkpoint(model=trainer.model, 
@@ -168,5 +168,15 @@ class ModelCheckpoint(Callback):
             trainer.state = TrainerStates.CHECKPOINT_SAVE
 
 
-    def on_exception(self, exception, trainer):
-        pass
+    def on_exception(self, trainer):
+        filename_format = "checkpoint_step_{step}_epoch_{epoch}.pth"
+        checkpoint_filename = self.format_filename(filename_format=filename_format, data=trainer.history)
+        checkpoint_path = os.path.join(self.directory, checkpoint_filename)
+
+        checkpoint = save_checkpoint(model=trainer.model, 
+                                     optimizer=trainer.optimizer if self.save_optimizer_state else None, 
+                                     scheduler=trainer.scheduler if self.save_scheduler_state else None, 
+                                     custom_keys=self.custom_keys, 
+                                     path=checkpoint_path, 
+                                     step=trainer.history["step"], 
+                                     epoch=trainer.history["epoch"])

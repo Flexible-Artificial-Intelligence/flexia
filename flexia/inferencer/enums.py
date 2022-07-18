@@ -23,3 +23,4 @@ class InferencerStates(ExplicitEnum):
     PREDICTION_END = "on_prediction_end"
     PREDICTION_STEP_START = "on_prediction_step_start"
     PREDICTION_STEP_END = "on_prediction_step_end"
+    EXCEPTION = "on_exception"

@@ -126,7 +126,7 @@ class Logger:
 
         pass
     
-    def on_exception(self, exception:Exception, trainer) -> None:
+    def on_exception(self, trainer) -> None:
         """
         Called when the exception raises.
         """

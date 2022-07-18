@@ -6,6 +6,7 @@ def exception_handler(function):
         instance = args[0]
         try:
             output = function(*args, **kwargs)
+            return output
         except Exception as error:
             instance.state = InferencerStates.EXCEPTION
             return error

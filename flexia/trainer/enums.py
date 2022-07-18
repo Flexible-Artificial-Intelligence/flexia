@@ -29,7 +29,8 @@ class SchedulingStrategy(ExplicitEnum):
 
 
 class TrainingStates(Enum):
-    INIT = "on_init"
+    INIT_START = "on_init_start"
+    INIT_END = "on_init_end"
     TRAINING_START = "on_training_start"
     TRAINING_END = "on_training_end"
     TRAINING_STEP_START = "on_training_step_start"

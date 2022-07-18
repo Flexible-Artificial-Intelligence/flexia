@@ -23,7 +23,8 @@ import numpy as np
 from abc import ABC, abstractmethod
 import logging
 
-from .trainer_enums import SchedulingStrategy, ValidationStrategy, TrainingStates
+from .enums import SchedulingStrategy, ValidationStrategy, TrainerStates
+from .utils import exception_handler
 from ..timer import Timer
 from ..averager import Averager
 from ..loggers import Logger
@@ -55,6 +56,9 @@ class Trainer(ABC):
                  epochs:int=1, 
                  time_format:str="{hours}:{minutes}:{seconds}", 
                  callbacks=Optional[List["Callback"]]) -> None:
+        
+        self._state = TrainerStates.INIT_START
+        self.state = self._state
         
         self.model = model
         self.teacher_model = teacher_model
@@ -112,9 +116,7 @@ class Trainer(ABC):
         })
         
         self.train_loader, self.validation_loader = None, None
-
-        self._state = TrainingStates.INIT
-        self.state = self._state
+        self.state = TrainerStates.INIT_END
 
     def __runner(self, instances:Optional[List[Union["Callback", "Logger"]]]=None) -> None:
         def run(instance):
@@ -135,12 +137,13 @@ class Trainer(ABC):
 
     @state.setter
     def state(self, value):
-        if self.state != TrainingStates.TRAINING_STOP:
+        if self.state != TrainerStates.TRAINING_STOP:
             self._state = value
 
         self.__runner(instances=self.loggers)
         self.__runner(instances=self.callbacks)
     
+    @exception_handler
     def train(self, 
               train_loader:DataLoader, 
               validation_loader:Optional[DataLoader]=None, 
@@ -172,7 +175,7 @@ class Trainer(ABC):
 
         train_loss, train_metrics = Averager(), Averager()
 
-        self.state = TrainingStates.TRAINING_START
+        self.state = TrainerStates.TRAINING_START
 
         timer = Timer(self.time_format)
         for epoch in range(1, self.epochs+1):
@@ -181,7 +184,7 @@ class Trainer(ABC):
             epoch_train_loss, epoch_train_metrics = Averager(), Averager()
             epoch_timer = Timer(self.time_format)
             
-            self.state = TrainingStates.EPOCH_START
+            self.state = TrainerStates.EPOCH_START
 
             self.model.zero_grad(set_to_none=True)
             for step, batch in enumerate(self.train_loader, 1):
@@ -191,7 +194,7 @@ class Trainer(ABC):
                 batch_size = len(batch)
                 pseudo_batch = None if pseudo_loader is None else next(iter(pseudo_loader))
                 
-                self.state = TrainingStates.TRAINING_STEP_START
+                self.state = TrainerStates.TRAINING_STEP_START
 
                 batch_loss, batch_metrics = self.training_step(batch=batch, pseudo_batch=pseudo_batch)
 
@@ -234,7 +237,7 @@ class Trainer(ABC):
                 self.__update_history_data(data=epoch_train_metrics.average, key_format="train_{key}_epoch")
                 
 
-                self.state = TrainingStates.TRAINING_STEP_END
+                self.state = TrainerStates.TRAINING_STEP_END
 
                 if self.validation_loader is not None:
                     if (self.history["step"] % self.validation_steps) == 0:
@@ -243,7 +246,7 @@ class Trainer(ABC):
 
                         self.scheduling_step(loss=validation_loss, loop="validation")
 
-                        if self.state == TrainingStates.CHECKPOINT_SAVE:
+                        if self.state == TrainerStates.CHECKPOINT_SAVE:
                             self.history.update({
                                 "best_validation_loss": validation_loss,
                                 "best_validation_metrics": validation_metrics,
@@ -254,15 +257,15 @@ class Trainer(ABC):
 
                         del validation_outputs
 
-                if self.state == TrainingStates.TRAINING_STOP:
+                if self.state == TrainerStates.TRAINING_STOP:
                     return self.__return()
 
             if self.scheduling_strategy == SchedulingStrategy.EPOCH:
                 self.scheduling_step(loop="training")
 
-            self.state = TrainingStates.EPOCH_END
+            self.state = TrainerStates.EPOCH_END
 
-        self.state = TrainingStates.TRAINING_END
+        self.state = TrainerStates.TRAINING_END
 
         return self.__return()
 
@@ -339,7 +342,8 @@ class Trainer(ABC):
                 self.scaler.unscale_(self.optimizer)
             
             nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.gradient_norm)
-            
+    
+    @exception_handler
     def validation_loop(self, loader:DataLoader) -> Tuple[Any, dict]:
         self.validation_loader = loader
 
@@ -351,14 +355,14 @@ class Trainer(ABC):
         steps = len(self.validation_loader)
         self.history["steps_validation"] = steps
         
-        self.state = TrainingStates.VALIDATION_START
+        self.state = TrainerStates.VALIDATION_START
 
         for step, batch in enumerate(self.validation_loader, 1):
             with torch.no_grad():
                 with autocast(enabled=self.amp):
                     batch_size = len(batch)
 
-                    self.state = TrainingStates.VALIDATION_STEP_START
+                    self.state = TrainerStates.VALIDATION_STEP_START
 
                     batch_loss, batch_outputs = self.compute_loss(batch=batch, return_outputs=True)
                     batch_metrics = self.compute_metrics(batch=batch, predictions=batch_outputs)
@@ -383,12 +387,12 @@ class Trainer(ABC):
                     self.__update_history_data(data=metrics.average, key_format="validation_{key}")
                     self.__update_history_data(data=batch_metrics, key_format="validation_{key}_batch")
 
-                    self.state = TrainingStates.VALIDATION_STEP_END
+                    self.state = TrainerStates.VALIDATION_STEP_END
 
                     if self.return_validation_outputs:
                         outputs.extend(batch_outputs.to("cpu").numpy())
 
-        self.state = TrainingStates.VALIDATION_END
+        self.state = TrainerStates.VALIDATION_END
 
         if self.return_validation_outputs:
             outputs = np.asarray(outputs)

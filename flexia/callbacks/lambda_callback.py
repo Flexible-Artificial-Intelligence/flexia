@@ -21,7 +21,8 @@ logger = logging.getLogger(__name__)
 
 class LambdaCallback:
     def __init__(self, 
-                 on_init=lambda trainer: None, 
+                 on_init_start=lambda trainer: None,
+                 on_init_end=lambda trainer: None, 
                  on_training_step_start=lambda trainer: None, 
                  on_training_step_end=lambda trainer: None, 
                  on_validation_step_start=lambda trainer: None, 
@@ -40,7 +41,8 @@ class LambdaCallback:
                  on_prediction_step_start=lambda inferencer: None,
                  on_prediction_step_end=lambda inferencer: None):
 
-        self.on_init = on_init
+        self.on_init_start = on_init_start
+        self.on_init_end = on_init_end
         self.on_training_step_start = on_training_step_start
         self.on_training_step_end = on_training_step_end
         self.on_epoch_start = on_epoch_start

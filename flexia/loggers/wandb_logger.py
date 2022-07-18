@@ -13,10 +13,16 @@
 # limitations under the License.
 
 
-import wandb
 import logging
 
 from .logger import Logger
+from ..import_utils import is_wandb_available
+
+
+if is_wandb_available():
+    import wandb
+else:
+    raise ModuleNotFoundError("wandb")
 
 
 logger = logging.getLogger(__name__)

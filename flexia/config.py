@@ -33,7 +33,7 @@ class Config(Dict):
         return path
     
     def from_json_string(self, string:str) -> dict:
-        return self(json.loads(string))
+        return Config(json.loads(string))
     
     def from_json(self, path:str) -> "Config":
         with open(path, "r", encoding="utf-8") as file:

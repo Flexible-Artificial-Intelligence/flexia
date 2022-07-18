@@ -22,8 +22,10 @@ import numpy as np
 from abc import ABC, abstractmethod
 import logging
 
+
 from ..third_party.addict import Dict
 from ..timer import Timer
+from .utils import exception_handler
 from .enums import InferencerStates
 from ..utils import initialize_device
 
@@ -40,6 +42,9 @@ class Inferencer(ABC):
                  callbacks=[], 
                  time_format:str="{hours}:{minutes}:{seconds}"):
 
+        self._state = InferencerStates.INIT_START
+        self.state = self._state
+
         self.model = model
         self.device = device
         self.amp = amp
@@ -50,9 +55,9 @@ class Inferencer(ABC):
         self.device = initialize_device(self.device)
 
         self.loader = None
-        self._state = InferencerStates.INIT
-        self.state = self._state
         self.history = Dict()
+
+        self.state = InferencerStates.INIT_END
 
     def __runner(self, instances=None):
         def run(instance):
@@ -82,7 +87,8 @@ class Inferencer(ABC):
     def prediction_step(self, batch:Any):
         pass
         
-    def __call__(self, loader:DataLoader):
+    @exception_handler
+    def predict(self, loader:DataLoader):
         self.loader = loader      
         steps = len(self.loader)
         self.history["steps"] = steps

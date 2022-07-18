@@ -14,11 +14,18 @@
 
 
 class Callback: 
-    def on_init(self, trainer) -> None:
+    def on_init_start(self, trainer) -> None:
+        """
+        Called when the Trainer initialization starts.
+        """
+
+        pass
+
+    def on_init_end(self, trainer) -> None:
         """
         Called when the Trainer initialization ends.
         """
-
+        
         pass
 
     def on_training_step_start(self, trainer) -> None:

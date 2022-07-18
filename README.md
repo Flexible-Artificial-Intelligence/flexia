@@ -76,4 +76,7 @@ Flexia has communication channels in some popular social networks. There you can
     - [ ] Digit Recognizer
     - [ ] Global Wheat Detection
     - [ ] Carvana Image Masking Challenge
+- [ ] ONNX
+- [ ] ONNXRuntime
+- [ ] TensorRT
 - [ ] Tests

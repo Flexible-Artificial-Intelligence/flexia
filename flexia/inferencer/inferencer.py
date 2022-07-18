@@ -42,17 +42,17 @@ class Inferencer(ABC):
                  callbacks=[], 
                  time_format:str="{hours}:{minutes}:{seconds}"):
 
-        self._state = InferencerStates.INIT_START
-        self.state = self._state
 
         self.model = model
         self.device = device
         self.amp = amp
         self.time_format = time_format
-        self.callbacks = callbacks
         self.loggers = loggers
-
+        self.callbacks = callbacks
         self.device = initialize_device(self.device)
+
+        self._state = InferencerStates.INIT_START
+        self.state = self._state
 
         self.loader = None
         self.history = Dict()

@@ -57,9 +57,6 @@ class Trainer(ABC):
                  time_format:str="{hours}:{minutes}:{seconds}", 
                  callbacks=Optional[List["Callback"]]) -> None:
         
-        self._state = TrainerStates.INIT_START
-        self.state = self._state
-        
         self.model = model
         self.teacher_model = teacher_model
         self.optimizer = optimizer
@@ -79,6 +76,8 @@ class Trainer(ABC):
         self.time_format = time_format   
         self.callbacks = callbacks
 
+        self._state = TrainerStates.INIT_START
+        self.state = self._state
 
         if not (0 < self.epochs):
             raise ValueError(f"`epochs` must be greater than 0, but given {self.epochs}.")
@@ -116,6 +115,7 @@ class Trainer(ABC):
         })
         
         self.train_loader, self.validation_loader = None, None
+        
         self.state = TrainerStates.INIT_END
 
     def __runner(self, instances:Optional[List[Union["Callback", "Logger"]]]=None) -> None:

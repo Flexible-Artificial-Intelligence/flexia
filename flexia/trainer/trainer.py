@@ -78,20 +78,16 @@ class Trainer(ABC):
 
         self._state = TrainerStates.INIT_START
         self.state = self._state
+        
 
-        if not (0 < self.epochs):
-            raise ValueError(f"`epochs` must be greater than 0, but given {self.epochs}.")
-        
-        if not isinstance(self.model, nn.Module):
-            raise TypeError(f"`model` must be subinstance of `torch.nn.Module`, but given `{type(self.model)}`")
-        
+        assert 0 < self.epochs, f"`epochs` must be greater than 0, but given {self.epochs}."
+        assert isinstance(self.model, nn.Module), f"`model` must be subinstance of `torch.nn.Module`, but given `{type(self.model)}`"
+        assert isinstance(self.gradient_accumulation_steps, int), f"`gradient_accumulation_steps` must be integer type, but given `{type(self.gradient_accumulation_steps)}`"
+
         if self.teacher_model is not None:
             if not isinstance(self.teacher_model, nn.Module):
                 raise TypeError(f"`teacher_model` must be subinstance of `torch.nn.Module`, but given `{type(self.teacher_model)}`")
             
-        if not isinstance(self.gradient_accumulation_steps, int):
-            raise TypeError(f"`gradient_accumulation_steps` must be integer type, but given `{type(self.gradient_accumulation_steps)}`")
-
         self.device = initialize_device(self.device)
 
         if self.gradient_scaling and self.scaler is None and self.amp:
@@ -105,7 +101,7 @@ class Trainer(ABC):
                               decimals=4)
             ]
 
-        self.best_validation_loss, self.best_validation_metrics, self.best_validation_outputs = None, None, None
+
         self.history = Dict({
             "step": 0,
             "epoch": 0,
@@ -118,10 +114,10 @@ class Trainer(ABC):
         
         self.state = TrainerStates.INIT_END
 
-    def __runner(self, instances:Optional[List[Union["Callback", "Logger"]]]=None) -> None:
+    def __runner(self, instances:Optional[List[Union["Callback", "Logger"]]]=None, *args, **kwargs) -> None:
         def run(instance):
             method = getattr(instance, self.state.value)
-            method(self)
+            method(self, *args, **kwargs)
 
         if instances is not None:
             if isinstance(instances, list):
@@ -137,7 +133,7 @@ class Trainer(ABC):
 
     @state.setter
     def state(self, value):
-        if self.state != TrainerStates.TRAINING_STOP or self.state != TrainerStates.EXCEPTION:
+        if self.state != TrainerStates.TRAINING_STOP:
             self._state = value
 
         self.__runner(instances=self.loggers)
@@ -257,7 +253,7 @@ class Trainer(ABC):
 
                         del validation_outputs
 
-                if self.state == TrainerStates.TRAINING_STOP or self.state == TrainerStates.EXCEPTION:
+                if self.state == TrainerStates.TRAINING_STOP:
                     return self.history
 
             if self.scheduling_strategy == SchedulingStrategy.EPOCH:

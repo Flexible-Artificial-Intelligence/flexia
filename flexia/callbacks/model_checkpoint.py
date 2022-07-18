@@ -45,7 +45,8 @@ class ModelCheckpoint(Callback):
                  save_scheduler_state=True, 
                  custom_keys={"model": "model_state",  
                               "optimizer": "optimizer_state", 
-                              "scheduler": "scheduler_state"}):
+                              "scheduler": "scheduler_state"}, 
+                save_checkpoint_on_exception=True):
         
         self.monitor_value = monitor_value
         self.mode = Modes(mode)
@@ -57,6 +58,7 @@ class ModelCheckpoint(Callback):
         self.save_optimizer_state = save_optimizer_state
         self.save_scheduler_state = save_scheduler_state
         self.custom_keys = custom_keys
+        self.save_checkpoint_on_exception = save_checkpoint_on_exception
         
         self.best_value = np.inf if self.mode == Modes.MIN else -np.inf
         
@@ -169,14 +171,17 @@ class ModelCheckpoint(Callback):
 
 
     def on_exception(self, trainer):
-        filename_format = "checkpoint_step_{step}_epoch_{epoch}.pth"
-        checkpoint_filename = self.format_filename(filename_format=filename_format, data=trainer.history)
-        checkpoint_path = os.path.join(self.directory, checkpoint_filename)
+        if self.save_checkpoint_on_exception:
+            filename_format = "checkpoint_step_{step}_epoch_{epoch}.pth"
+            checkpoint_filename = self.format_filename(filename_format=filename_format, data=trainer.history)
+            checkpoint_path = os.path.join(self.directory, checkpoint_filename)
 
-        checkpoint = save_checkpoint(model=trainer.model, 
-                                     optimizer=trainer.optimizer if self.save_optimizer_state else None, 
-                                     scheduler=trainer.scheduler if self.save_scheduler_state else None, 
-                                     custom_keys=self.custom_keys, 
-                                     path=checkpoint_path, 
-                                     step=trainer.history["step"], 
-                                     epoch=trainer.history["epoch"])
+            checkpoint = save_checkpoint(model=trainer.model, 
+                                        optimizer=trainer.optimizer if self.save_optimizer_state else None, 
+                                        scheduler=trainer.scheduler if self.save_scheduler_state else None, 
+                                        custom_keys=self.custom_keys, 
+                                        path=checkpoint_path, 
+                                        step=trainer.history["step"], 
+                                        epoch=trainer.history["epoch"])
+
+        

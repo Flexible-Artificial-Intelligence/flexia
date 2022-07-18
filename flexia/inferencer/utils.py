@@ -9,7 +9,6 @@ def exception_handler(function):
             return output
         except Exception as error:
             instance.state = InferencerStates.EXCEPTION
-            instance.history["exception"] = error
-            return instance.history
+            raise error
 
     return handler

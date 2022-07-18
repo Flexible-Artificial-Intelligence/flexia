@@ -59,10 +59,10 @@ class Inferencer(ABC):
 
         self.state = InferencerStates.INIT_END
 
-    def __runner(self, instances=None):
+    def __runner(self, instances=None, *args, **kwargs) -> None:
         def run(instance):
             method = getattr(instance, self.state.value)
-            method(self)
+            method(self, *args, **kwargs)
 
         if instances is not None:
             if isinstance(instances, list):

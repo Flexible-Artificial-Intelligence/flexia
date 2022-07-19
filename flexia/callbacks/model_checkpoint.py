@@ -39,7 +39,7 @@ class ModelCheckpoint(Callback):
                  delta:Union[float, int]=0.0, 
                  directory:str="./", 
                  overwriting:bool=False, 
-                 filename_format:str="checkpoint_{step}_{value}.pth", 
+                 filename_format:str="checkpoint.pth", 
                  num_candidates:Union[str, float, int]=1, 
                  save_optimizer_state=True, 
                  save_scheduler_state=True, 

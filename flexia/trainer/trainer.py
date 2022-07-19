@@ -109,7 +109,6 @@ class Trainer(ABC):
             else:
                 run(instances)
 
-
     @property
     def state(self):
         return self._state
@@ -126,8 +125,7 @@ class Trainer(ABC):
     def train(self, 
               train_loader:DataLoader, 
               validation_loader:Optional[DataLoader]=None, 
-              return_validation_outputs:bool=True, 
-              recompute_values_at_end=False) -> tuple:
+              return_validation_outputs:bool=True) -> tuple:
         
         self.train_loader = train_loader
         self.validation_loader = validation_loader
@@ -218,7 +216,8 @@ class Trainer(ABC):
                 if self.validation_loader is not None:
                     if (self.history["step"] % self.validation_steps) == 0:
 
-                        validation_loss, validation_metrics, validation_outputs = self.validation_loop(loader=self.validation_loader, recompute_values_at_end=recompute_values_at_end)
+                        validation_loss, validation_metrics, validation_outputs = self.validation_loop(loader=self.validation_loader)
+                        self.on_validation_end(outputs=validation_outputs)
 
                         self.scheduling_step(loss=validation_loss, loop="validation")
 
@@ -306,7 +305,7 @@ class Trainer(ABC):
             nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.gradient_norm)
     
     @exception_handler
-    def validation_loop(self, loader:DataLoader, recompute_values_at_end=False) -> Tuple[Any, dict]:
+    def validation_loop(self, loader:DataLoader) -> Tuple[Any, dict]:
         self.validation_loader = loader
 
         self.model.to(self.device)
@@ -341,19 +340,9 @@ class Trainer(ABC):
                         "validation_loss": loss.average,
                         "validation_loss_batch": batch_loss.item(),
                         "validation_metrics_list": list(metrics.average.keys()),
+                        "validation_metrics": metrics.average,
+                        "validation_metrics_batch": batch_metrics,
                     })
-
-                    if not recompute_values_at_end:
-                        self.history.update({
-                            "validation_metrics": metrics.average,
-                            "validation_metrics_batch": batch_metrics,
-                        })
-                    else:
-                        if step == steps:
-                            self.history.update({
-                                "validation_metrics": batch_metrics,
-                                "validation_metrics_batch": batch_metrics,
-                            })
 
                     
                     self.__update_history_data(data=metrics.average, key_format="validation_{key}")
@@ -371,6 +360,7 @@ class Trainer(ABC):
         else:
             outputs = None
 
+        self.history["validation_outputs"] = outputs
 
         return (loss.average, metrics.average, outputs)
 
@@ -382,3 +372,11 @@ class Trainer(ABC):
     
     def compute_metrics(self, batch:Any, predictions:Any) -> dict:
         return {}
+
+
+    def on_validation_end(self, outputs) -> None:
+        """
+        Called when the validation loop ends.
+        """
+
+        pass

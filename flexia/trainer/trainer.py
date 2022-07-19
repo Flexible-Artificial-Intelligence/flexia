@@ -217,7 +217,6 @@ class Trainer(ABC):
                     if (self.history["step"] % self.validation_steps) == 0:
 
                         validation_loss, validation_metrics, validation_outputs = self.validation_loop(loader=self.validation_loader)
-                        self.on_validation_end(outputs=validation_outputs)
 
                         self.scheduling_step(loss=validation_loss, loop="validation")
 
@@ -353,14 +352,13 @@ class Trainer(ABC):
                     if self.return_validation_outputs:
                         outputs.extend(batch_outputs.to("cpu").numpy())
 
-        self.state = TrainerStates.VALIDATION_END
-
         if self.return_validation_outputs:
             outputs = np.asarray(outputs)
         else:
             outputs = None
 
-        self.history["validation_outputs"] = outputs
+        self.on_validation_end(outputs=outputs)
+        self.state = TrainerStates.VALIDATION_END
 
         return (loss.average, metrics.average, outputs)
 

@@ -40,7 +40,6 @@ class Trainer(ABC):
     def __init__(self, 
                  model:nn.Module, 
                  optimizer:optim.Optimizer,
-                 teacher_model:Optional[nn.Module]=None,
                  scheduler:Optional[lr_scheduler._LRScheduler]=None, 
                  scheduling_strategy:str="step", 
                  gradient_accumulation_steps:int=1, 
@@ -48,7 +47,6 @@ class Trainer(ABC):
                  scaler:Optional["GradScaler"]=None,
                  gradient_norm:float=0, 
                  amp:bool=False, 
-                 verbose:int=1, 
                  device:Optional[Union[str, torch.device]]="cpu", 
                  validation_strategy:str="epoch",
                  validation_steps:int=1, 
@@ -58,7 +56,6 @@ class Trainer(ABC):
                  callbacks=Optional[List["Callback"]]) -> None:
         
         self.model = model
-        self.teacher_model = teacher_model
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.scheduling_strategy = SchedulingStrategy(scheduling_strategy)
@@ -67,7 +64,6 @@ class Trainer(ABC):
         self.gradient_norm = gradient_norm
         self.amp = amp
         self.device = device
-        self.verbose = verbose
         self.validation_strategy = ValidationStrategy(validation_strategy)
         self.validation_steps = validation_steps
         self.scaler = scaler
@@ -84,23 +80,10 @@ class Trainer(ABC):
         assert isinstance(self.model, nn.Module), f"`model` must be subinstance of `torch.nn.Module`, but given `{type(self.model)}`"
         assert isinstance(self.gradient_accumulation_steps, int), f"`gradient_accumulation_steps` must be integer type, but given `{type(self.gradient_accumulation_steps)}`"
 
-        if self.teacher_model is not None:
-            if not isinstance(self.teacher_model, nn.Module):
-                raise TypeError(f"`teacher_model` must be subinstance of `torch.nn.Module`, but given `{type(self.teacher_model)}`")
-            
         self.device = initialize_device(self.device)
 
         if self.gradient_scaling and self.scaler is None and self.amp:
             self.scaler = GradScaler()
-
-        if self.loggers is None:
-            self.loggers = [
-                LoggingLogger(name="trainer_logger", 
-                              path="training_logs.log", 
-                              verbose=1, 
-                              decimals=4)
-            ]
-
 
         self.history = Dict({
             "step": 0,
@@ -143,7 +126,6 @@ class Trainer(ABC):
     def train(self, 
               train_loader:DataLoader, 
               validation_loader:Optional[DataLoader]=None, 
-              pseudo_loader:Optional[DataLoader]=None, 
               return_validation_outputs:bool=True) -> tuple:
         
         self.train_loader = train_loader
@@ -151,8 +133,6 @@ class Trainer(ABC):
         self.return_validation_outputs = return_validation_outputs
 
         self.model.to(self.device)
-        if self.teacher_model is not None: 
-            self.teacher_model.to(self.device)
         
         if self.validation_strategy == ValidationStrategy.EPOCH:
             self.validation_steps = len(self.train_loader) * self.validation_steps
@@ -188,11 +168,10 @@ class Trainer(ABC):
                 self.history["step_epoch"] = step
                 
                 batch_size = len(batch)
-                pseudo_batch = None if pseudo_loader is None else next(iter(pseudo_loader))
                 
                 self.state = TrainerStates.TRAINING_STEP_START
 
-                batch_loss, batch_metrics = self.training_step(batch=batch, pseudo_batch=pseudo_batch)
+                batch_loss, batch_metrics = self.training_step(batch=batch)
 
                 lr = self.get_lr()
 
@@ -304,9 +283,7 @@ class Trainer(ABC):
                     self.scheduler.step()
 
                     
-    def training_step(self, 
-                      batch:Any, 
-                      pseudo_batch:Optional[Any]=None) -> Tuple[torch.Tensor, dict]:
+    def training_step(self, batch:Any) -> Tuple[torch.Tensor, dict]:
 
         self.model.train()
         with autocast(enabled=self.amp):
@@ -317,15 +294,6 @@ class Trainer(ABC):
                 loss /= self.gradient_accumulation_steps
             
             loss = self.backward_step(loss=loss)
-
-            if pseudo_batch is not None and self.teacher_model is not None:
-                pseudo_loss = self.pseudo_labeling_step(batch=batch,
-                                                        pseudo_batch=pseudo_batch,
-                                                        loss=loss, 
-                                                        metrics=metrics)
-
-                if pseudo_loss is not None:
-                    pseudo_loss = self.backward_step(loss=pseudo_loss)
 
         return loss.detach(), metrics
                 
@@ -403,10 +371,3 @@ class Trainer(ABC):
     
     def compute_metrics(self, batch:Any, predictions:Any) -> dict:
         return {}
-
-    def pseudo_labeling_step(self, 
-                             batch:Any, 
-                             pseudo_batch:Any, 
-                             loss:Optional[float]=None, 
-                             metrics:Optional[dict]=None) -> torch.Tensor:
-        pass

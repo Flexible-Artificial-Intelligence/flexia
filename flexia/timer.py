@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 class Timer:
-    def __init__(self, time_format:str="{hours}:{minutes}:{seconds}"):
+    def __init__(self, time_format:str="{hours:2d}:{minutes:2d}:{seconds:2d}"):
         self.start = datetime.now()
         self.time_format = time_format
         
@@ -102,10 +102,3 @@ class Timer:
         self.remain_time = abs(total_seconds - self.elapsed_time)
         
         return self.elapsed, self.remain
-        
-        
-    def __str__(self) -> str:
-        return f"Timer(start={self.start}, remain={self.remain}, elapsed={self.elapsed})"
-    
-    
-    __repr__ = __str__

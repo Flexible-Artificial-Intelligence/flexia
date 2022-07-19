@@ -29,12 +29,13 @@ class TQDMLogger(Logger):
                  bar_format="{l_bar} {bar} {n_fmt}/{total_fmt} - elapsed: {elapsed} - remain: {remaining}{postfix}", 
                  color="#000", 
                  decimals=4, 
-                 notebook=False):
+                 notebook=False, sep=" - "):
         
         self.bar_format = bar_format
         self.color = color
         self.decimals = decimals
         self.notebook = notebook
+        self.sep = sep
 
     def on_epoch_start(self, trainer):
         epoch = trainer.history["epoch"]
@@ -53,7 +54,7 @@ class TQDMLogger(Logger):
         lr = trainer.history["lr"]
         
         metrics_string = format_metrics(metrics=train_metric_epoch, decimals=self.decimals)
-        string = f"loss: {train_loss_epoch:.{self.decimals}}{metrics_string} - lr: {lr:.{self.decimals}}"
+        string = f"loss: {train_loss_epoch:.{self.decimals}f}{metrics_string}{self.sep}lr: {lr:.{self.decimals}}"
         trainer.train_loader.set_postfix_str(string)
 
     def on_validation_step_end(self, trainer):

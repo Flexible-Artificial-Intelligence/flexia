@@ -43,6 +43,6 @@ def get_logger(name=__name__,
 
 
 def format_metrics(metrics, sep=" - ", decimals=4) -> str:
-    string = sep.join([f"{metric}: {value:.{decimals}}" for metric, value in metrics.items()])
-    string = " - " + string if string != "" else string
+    string = sep.join([f"{metric}: {value:.{decimals}f}" for metric, value in metrics.items()])
+    string = sep + string if string != "" else string
     return string

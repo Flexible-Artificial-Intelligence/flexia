@@ -23,11 +23,12 @@ logger = logging.getLogger(__name__)
 
 
 class PrintLogger(Logger):
-    def __init__(self, verbose:int=1, decimals:int=4) -> None:
+    def __init__(self, verbose:int=1, decimals:int=3, sep=" - ") -> None:
         super().__init__()
 
         self.verbose = verbose
         self.decimals = decimals
+        self.sep = sep
 
     def on_training_step_end(self, trainer):
         step = trainer.history["step_epoch"]
@@ -39,10 +40,21 @@ class PrintLogger(Logger):
             train_loss_epoch = trainer.history["train_loss_epoch"]
             train_metrics_epoch = trainer.history["train_metrics"]
             lr = trainer.history["lr"]
+            epoch = trainer.history["epoch"]
+            epochs = trainer.history["epochs"]
             
-            metrics_string = format_metrics(metrics=train_metrics_epoch, decimals=self.decimals)
-            log_message = f"{step}/{steps} - elapsed: {elapsed} - remain: {remain} - loss: {train_loss_epoch:.{self.decimals}}{metrics_string} - lr: {lr:.{self.decimals}}"
-            print(log_message)
+            steps_margin = len(str(steps))
+            epochs_margin = len(str(epochs))
+
+            metrics_string = format_metrics(metrics=train_metrics_epoch, decimals=self.decimals, sep=self.sep)
+
+            print(f"epoch: {epoch:{epochs_margin}d}/{epochs:{epochs_margin}d}{self.sep}"
+                  f"step: {step:{steps_margin}d}/{steps:{steps_margin}d}{self.sep}"
+                  f"elapsed: {elapsed}{self.sep}"
+                  f"remain: {remain}{self.sep}"
+                  f"loss: {train_loss_epoch:.{self.decimals}f}"
+                  f"{metrics_string}{self.sep}"
+                  f"lr: {lr:.{self.decimals}f}")
 
 
     def on_validation_step_end(self, trainer):
@@ -55,16 +67,15 @@ class PrintLogger(Logger):
             elapsed = trainer.history["validation_elapsed"]
             remain = trainer.history["validation_remain"]
             
-            metrics_string = format_metrics(metrics=metrics, decimals=self.decimals)
-            log_message = f"[Validation] {step}/{steps} - elapsed: {elapsed} - remain: {remain} - loss: {loss:.{self.decimals}}{metrics_string}"
-            print(log_message)
+            steps_margin = len(str(steps))
 
+            metrics_string = format_metrics(metrics=metrics, decimals=self.decimals, sep=self.sep)
 
-    def on_epoch_start(self, trainer):
-        epoch = trainer.history["epoch"]
-        epochs = trainer.history["epochs"]
-        log_message = f"Epoch {epoch}/{epochs}"
-        print(log_message)
+            print(f"[Validation] {step:{steps_margin}d}/{steps:{steps_margin}d}{self.sep}"
+                  f"elapsed: {elapsed}{self.sep}"
+                  f"remain: {remain}{self.sep}"
+                  f"loss: {loss:.{self.decimals}f}"
+                  f"{metrics_string}")
 
 
     def on_prediction_step_end(self, inferencer):
@@ -74,5 +85,7 @@ class PrintLogger(Logger):
         remain = inferencer.history["remain"]
 
         if step % self.verbose == 0 or step == steps and self.verbose > 0:
-            log_message = f"[Prediction] {step}/{steps} - elapsed: {elapsed} - remain: {remain}"
-            print(log_message)
+            steps_margin = len(str(steps))
+            print(f"[Prediction] {step:{steps_margin}d}/{steps:{steps_margin}d}{self.sep}"
+                  f"elapsed: {elapsed}{self.sep}"
+                  f"remain: {remain}{self.sep}")

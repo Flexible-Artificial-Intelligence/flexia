@@ -40,7 +40,7 @@ class Inferencer(ABC):
                  amp:bool=False, 
                  loggers:Union[str, list]=[],
                  callbacks=[], 
-                 time_format:str="{hours}:{minutes}:{seconds}"):
+                 time_format:str="{hours:02d}:{minutes:02d}:{seconds:02d}"):
 
 
         self.model = model

@@ -52,7 +52,7 @@ class Trainer(ABC):
                  validation_steps:int=1, 
                  loggers:Optional[List["Logger"]]=None, 
                  epochs:int=1, 
-                 time_format:str="{hours}:{minutes}:{seconds}", 
+                 time_format:str="{hours:02d}:{minutes:02d}:{seconds:02d}", 
                  callbacks=Optional[List["Callback"]]) -> None:
         
         self.model = model

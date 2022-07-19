@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 class Timer:
-    def __init__(self, time_format:str="{hours:02}:{minutes:02d}:{seconds:02d}"):
+    def __init__(self, time_format:str="{hours:02d}:{minutes:02d}:{seconds:02d}"):
         self.start = datetime.now()
         self.time_format = time_format
         

@@ -222,12 +222,12 @@ class Trainer(ABC):
 
                         if self.state == TrainerStates.CHECKPOINT_SAVE:
                             self.history.update({
-                                "best_validation_loss": validation_loss,
-                                "best_validation_metrics": validation_metrics,
+                                "best_validation_loss": self.history["validation_loss"],
+                                "best_validation_metrics": self.history["validation_metrics"],
                                 "best_validation_outputs": validation_outputs,
                             })
 
-                            self.__update_history_data(data=validation_metrics, key_format="best_validation_{key}")
+                            self.__update_history_data(data=self.history["validation_metrics"], key_format="best_validation_{key}")
 
                         del validation_outputs
 

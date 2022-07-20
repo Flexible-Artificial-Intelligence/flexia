@@ -16,18 +16,24 @@
 import logging
 
 from .logger import Logger
-from .utils import format_metrics
+from .utils import format_metrics, format_time
 
 
 logger = logging.getLogger(__name__)
 
 
 class PrintLogger(Logger):
-    def __init__(self, verbose:int=1, decimals:int=3, sep=" - ") -> None:
+    def __init__(self, 
+                 verbose:int=1, 
+                 decimals:int=3, 
+                 sep=" - ", 
+                 time_format:str="{hours:02d}:{minutes:02d}:{seconds:02d}", 
+) -> None:
         super().__init__()
 
         self.verbose = verbose
         self.decimals = decimals
+        self.time_format = time_format
         self.sep = sep
 
     def on_training_step_end(self, trainer):
@@ -35,8 +41,8 @@ class PrintLogger(Logger):
         steps = trainer.history["steps_epoch"]
 
         if step % self.verbose == 0 or step == steps and self.verbose > 0:
-            elapsed = trainer.history["elapsed_epoch"]
-            remain = trainer.history["remain_epoch"]
+            elapsed = format_time(trainer.history["elapsed_epoch"], time_format=self.time_format)
+            remain = format_time(trainer.history["remain_epoch"], time_format=self.time_format)
             train_loss_epoch = trainer.history["train_loss_epoch"]
             train_metrics_epoch = trainer.history["train_metrics"]
             lr = trainer.history["lr"]
@@ -64,8 +70,8 @@ class PrintLogger(Logger):
         if step % self.verbose == 0 or step == steps and self.verbose > 0:
             loss = trainer.history["validation_loss"]
             metrics = trainer.history["validation_metrics"]
-            elapsed = trainer.history["validation_elapsed"]
-            remain = trainer.history["validation_remain"]
+            elapsed = format_time(trainer.history["validation_elapsed"], time_format=self.time_format)
+            remain = format_time(trainer.history["validation_remain"], time_format=self.time_format)
             
             steps_margin = len(str(steps))
 
@@ -81,10 +87,11 @@ class PrintLogger(Logger):
     def on_prediction_step_end(self, inferencer):
         step = inferencer.history["step"]
         steps = inferencer.history["steps"]
-        elapsed = inferencer.history["elapsed"]
-        remain = inferencer.history["remain"]
 
         if step % self.verbose == 0 or step == steps and self.verbose > 0:
+            elapsed = format_time(inferencer.history["elapsed"], time_format=self.time_format)
+            remain = format_time(inferencer.history["remain"], time_format=self.time_format)
+
             steps_margin = len(str(steps))
             print(f"[Prediction] {step:{steps_margin}d}/{steps:{steps_margin}d}{self.sep}"
                   f"elapsed: {elapsed}{self.sep}"

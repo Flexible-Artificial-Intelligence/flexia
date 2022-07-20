@@ -14,6 +14,7 @@
 
 
 import logging
+from datetime import timedelta
 
 
 def get_logger(name=__name__, 
@@ -46,3 +47,18 @@ def format_metrics(metrics, sep=" - ", decimals=4) -> str:
     string = sep.join([f"{metric}: {value:.{decimals}f}" for metric, value in metrics.items()])
     string = sep + string if string != "" else string
     return string
+
+
+def format_time(time:timedelta, time_format:str="{hours:02d}:{minutes:02d}:{seconds:02d}") -> str:
+    """
+    Formats `timedelta` to user's time format.
+    """
+    time = get_time_from_timedelta(time)
+    return time_format.format(**time)
+
+def get_time_from_timedelta(delta:timedelta) -> dict:
+    time = {"days": delta.days}
+    time["hours"], rem = divmod(delta.seconds, 3600)
+    time["minutes"], time["seconds"] = divmod(rem, 60)
+
+    return time

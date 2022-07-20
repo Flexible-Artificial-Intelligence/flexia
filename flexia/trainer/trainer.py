@@ -47,13 +47,13 @@ class Trainer(ABC):
                  gradient_scaling:bool=False, 
                  scaler:Optional["GradScaler"]=None,
                  precision="fp32",
+                 amp=False,
                  gradient_norm:float=None, 
                  device:Optional[Union[str, torch.device]]="cpu", 
                  validation_strategy:str="epoch",
                  validation_steps:int=1, 
                  loggers:Optional[List["Logger"]]=None, 
                  epochs:int=1, 
-                 time_format:str="{hours:02d}:{minutes:02d}:{seconds:02d}", 
                  callbacks=Optional[List["Callback"]]) -> None:
         
         self.model = model
@@ -64,13 +64,13 @@ class Trainer(ABC):
         self.gradient_scaling = gradient_scaling
         self.precision = Precision(precision)
         self.gradient_norm = gradient_norm
+        self.amp = amp
         self.device = device
         self.validation_strategy = ValidationStrategy(validation_strategy)
         self.validation_steps = validation_steps
         self.scaler = scaler
         self.loggers = loggers
         self.epochs = epochs
-        self.time_format = time_format   
         self.callbacks = callbacks
 
         self._state = TrainerStates.INIT_START
@@ -121,6 +121,9 @@ class Trainer(ABC):
             else:
                 run(instances)
 
+    def context_manager(self):
+        pass
+
     @property
     def state(self):
         return self._state
@@ -164,12 +167,12 @@ class Trainer(ABC):
 
         self.state = TrainerStates.TRAINING_START
 
-        timer = Timer(self.time_format)
+        timer = Timer()
         for epoch in range(1, self.epochs+1):
             self.history["epoch"] = epoch
 
             epoch_train_loss, epoch_train_metrics = Averager(), Averager()
-            epoch_timer = Timer(self.time_format)
+            epoch_timer = Timer()
             
             self.state = TrainerStates.EPOCH_START
 
@@ -296,7 +299,7 @@ class Trainer(ABC):
                     
     def training_step(self, batch:Any) -> Tuple[torch.Tensor, dict]:
         self.model.train()
-        with torch.autocast(device_type=self.device.type, dtype=self.precision_dtype, enabled=True):
+        with torch.autocast(device_type=self.device.type, dtype=self.precision_dtype, enabled=self.amp):
             loss, outputs = self.compute_loss(batch=batch, return_outputs=True)
             metrics = self.compute_metrics(batch=batch, predictions=outputs)
 
@@ -322,7 +325,7 @@ class Trainer(ABC):
         self.model.to(self.device)
         self.model.eval()
         loss, metrics = Averager(), Averager()
-        timer = Timer(self.time_format)
+        timer = Timer()
         outputs, targets = [], []
         steps = len(self.validation_loader)
         self.history["steps_validation"] = steps
@@ -331,7 +334,7 @@ class Trainer(ABC):
 
         for step, batch in enumerate(self.validation_loader, 1):
             with torch.no_grad():
-                with torch.autocast(device_type=self.device.type, dtype=self.precision_dtype, enabled=True):
+                with torch.autocast(device_type=self.device.type, dtype=self.precision_dtype, enabled=self.amp):
                     batch_size = len(batch)
 
                     self.state = TrainerStates.VALIDATION_STEP_START

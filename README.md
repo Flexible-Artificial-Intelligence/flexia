@@ -57,8 +57,6 @@ Flexia has communication channels in some popular social networks. There you can
 - Twitter
 - Telegram
 
-## Releases
-
 ## TO-DO
 
 - [ ] Documentation (readthedocs)
@@ -86,3 +84,5 @@ Flexia has communication channels in some popular social networks. There you can
 - [ ] ONNXRuntime
 - [ ] TensorRT
 - [ ] Tests
+
+## Releases

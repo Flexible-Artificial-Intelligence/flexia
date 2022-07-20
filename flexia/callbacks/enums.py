@@ -19,3 +19,7 @@ from ..enums import ExplicitEnum
 class Modes(ExplicitEnum):
     MIN = "min"
     MAX = "max"
+
+class IntervalStrategies(ExplicitEnum):
+    EPOCH = "epoch"
+    STEP = "step"

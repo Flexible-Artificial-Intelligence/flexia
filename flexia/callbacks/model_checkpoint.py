@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+from fileinput import filename
 import torch
 import shutil
 import os
@@ -26,7 +27,7 @@ from .callback import Callback
 from ..utils import save_checkpoint
 from ..trainer.enums import TrainerStates
 from .utils import get_delta_value, compare
-from .enums import Modes
+from .enums import Modes, IntervalStrategies
 
 
 logger = logging.getLogger(__name__)
@@ -46,7 +47,10 @@ class ModelCheckpoint(Callback):
                  custom_keys={"model": "model_state",  
                               "optimizer": "optimizer_state", 
                               "scheduler": "scheduler_state"}, 
-                save_checkpoint_on_exception=True):
+                save_checkpoint_on_exception=True, 
+                save_interval=None, 
+                save_interval_strategy="epoch", 
+                save_interval_directory=None):
         
         self.monitor_value = monitor_value
         self.mode = Modes(mode)
@@ -59,6 +63,9 @@ class ModelCheckpoint(Callback):
         self.save_scheduler_state = save_scheduler_state
         self.custom_keys = custom_keys
         self.save_checkpoint_on_exception = save_checkpoint_on_exception
+        self.save_interval = save_interval
+        self.save_interval_strategy = IntervalStrategies(save_interval_strategy)
+        self.save_interval_directory = save_interval_directory
         
         self.best_value = np.inf if self.mode == Modes.MIN else -np.inf
         
@@ -134,16 +141,7 @@ class ModelCheckpoint(Callback):
 
         is_saved = False
         if compare(value=delta_value, other=self.best_value, mode=self.mode) and self.num_candidates != 0:
-            checkpoint_filename = self.format_filename(filename_format=self.filename_format, data=trainer.history)
-            checkpoint_path = os.path.join(self.directory, checkpoint_filename)
-            
-            checkpoint = save_checkpoint(model=trainer.model, 
-                                         optimizer=trainer.optimizer if self.save_optimizer_state else None, 
-                                         scheduler=trainer.scheduler if self.save_scheduler_state else None, 
-                                         custom_keys=self.custom_keys, 
-                                         path=checkpoint_path, 
-                                         step=trainer.history["step"], 
-                                         epoch=trainer.history["epoch"])
+            checkpoint_path, checkpoint = self.save_checkpoint(trainer=trainer, filename_format=self.filename_format)
             
             improvement_delta = abs(value - self.best_value)
             message = f"'best_value' is improved by {improvement_delta}! New 'best_value': {value}. Checkpoint path: '{checkpoint_path}'."
@@ -169,19 +167,50 @@ class ModelCheckpoint(Callback):
         if is_saved:
             trainer.state = TrainerStates.CHECKPOINT_SAVE
 
+    def on_training_step_end(self, trainer) -> None:
+        if self.save_interval_strategy == IntervalStrategies.STEP and self.save_interval is not None:
+            step = trainer.history["step"]
+
+            if step % self.save_interval == 0:
+                filename_format = "checkpoint_step_{step}.pth"
+                checkpoint_path, checkpoint = self.save_checkpoint(trainer=trainer, 
+                                                                   directory=self.save_interval_directory, 
+                                                                   filename_format=filename_format)
+
+    
+    def on_epoch_end(self, trainer) -> None:
+        if self.save_interval_strategy == IntervalStrategies.EPOCH and self.save_interval is not None:
+            epoch = trainer.history["epoch"]
+
+            if epoch % self.save_interval == 0:
+                filename_format = "checkpoint_epoch_{epoch}.pth"
+                checkpoint_path, checkpoint = self.save_checkpoint(trainer=trainer, 
+                                                                   directory=self.save_interval_directory, 
+                                                                   filename_format=filename_format)
+
+
+    def save_checkpoint(self, trainer, directory=None, filename_format="checkpoint.pth", **kwargs):
+        if directory is None:
+            directory = self.directory
+
+        checkpoint_filename = self.format_filename(filename_format=filename_format, data=trainer.history)
+        checkpoint_path = os.path.join(directory, checkpoint_filename)
+
+        checkpoint = save_checkpoint(model=trainer.model, 
+                                     optimizer=trainer.optimizer if self.save_optimizer_state else None, 
+                                     scheduler=trainer.scheduler if self.save_scheduler_state else None, 
+                                     custom_keys=self.custom_keys, 
+                                     path=checkpoint_path, 
+                                     step=trainer.history["step"], 
+                                     epoch=trainer.history["epoch"], 
+                                     **kwargs)
+
+        return checkpoint_path, checkpoint
+
 
     def on_exception(self, trainer):
         if self.save_checkpoint_on_exception:
-            filename_format = "checkpoint_step_{step}_epoch_{epoch}.pth"
-            checkpoint_filename = self.format_filename(filename_format=filename_format, data=trainer.history)
-            checkpoint_path = os.path.join(self.directory, checkpoint_filename)
-
-            checkpoint = save_checkpoint(model=trainer.model, 
-                                        optimizer=trainer.optimizer if self.save_optimizer_state else None, 
-                                        scheduler=trainer.scheduler if self.save_scheduler_state else None, 
-                                        custom_keys=self.custom_keys, 
-                                        path=checkpoint_path, 
-                                        step=trainer.history["step"], 
-                                        epoch=trainer.history["epoch"])
+            filename_format = "last_checkpoint_step_{step}_epoch_{epoch}.pth"
+            checkpoint_path, checkpoint = self.save_checkpoint(trainer=trainer, filename_format=filename_format)
 
         

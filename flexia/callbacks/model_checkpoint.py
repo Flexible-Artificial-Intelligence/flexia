@@ -13,20 +13,17 @@
 # limitations under the License.
 
 
-from fileinput import filename
-import torch
-import shutil
 import os
 import gc
 import numpy as np
-from typing import  Union
+from typing import Union
 import logging
 
 
 from .callback import Callback
 from ..utils import save_checkpoint
 from ..trainer.enums import TrainerStates
-from .utils import get_delta_value, compare
+from .utils import get_delta_value, compare, remove_files_from_directory
 from .enums import Modes, IntervalStrategies
 
 
@@ -81,29 +78,16 @@ class ModelCheckpoint(Callback):
         else:
             if os.path.isdir(self.directory):
                 if self.overwriting:
-                    self.__remove_files_from_directory(self.directory)
+                    remove_files_from_directory(directory=self.directory)
             else:
                 raise NotADirectoryError(f"'{self.directory}' is not directory.")
         
         self.all_candidates = []
+        self.all_interval_candidates = []
     
     
-    def __remove_files_from_directory(self, directory:str) -> None:
-        """
-        Removes all files and folders from directory.
-        """
-        
-        filenames = os.listdir(directory)
-        pathes = [os.path.join(directory, filename) for filename in filenames]
-        
-        for path in pathes:
-            if os.path.isfile(path) or os.path.islink(path):
-                os.unlink(path)
-            elif os.path.isdir(path):
-                shutil.rmtree(path)
     
-    
-    def append_candidate(self, path:str) -> None:   
+    def append_candidate(self, candidates_list, path) -> None:   
         """
         Appends new candidate.
         """
@@ -111,24 +95,24 @@ class ModelCheckpoint(Callback):
         if not os.path.exists(path):
             raise FileNotFoundError("`path` does not exist.")
         
-        self.all_candidates.append(path)
+        candidates_list.append(path)
         
     
-    def __select_candidates(self) -> None:
+    def __select_candidates(self, candidates_list) -> None:
         """
         Deleted not selected candidates.
         """
-        if len(self.all_candidates) > self.num_candidates:
-            selected_candidates = self.all_candidates[-self.num_candidates:]
+        if len(candidates_list) > self.num_candidates:
+            selected_candidates = candidates_list[-self.num_candidates:]
             deleted_candidates = 0
-            for candidate_path in self.all_candidates:
+            for candidate_path in candidates_list:
                 if candidate_path not in selected_candidates:                        
                     if os.path.exists(candidate_path):
                         os.remove(candidate_path)
 
                     deleted_candidates += 1
                 
-            self.all_candidates = self.all_candidates[-self.num_candidates:]
+            candidates_list = candidates_list[-self.num_candidates:]
                 
             
     def format_filename(self, filename_format="checkpoint.pth", data={}) -> str:
@@ -141,19 +125,21 @@ class ModelCheckpoint(Callback):
 
         is_saved = False
         if compare(value=delta_value, other=self.best_value, mode=self.mode) and self.num_candidates != 0:
-            checkpoint_path, checkpoint = self.save_checkpoint(trainer=trainer, filename_format=self.filename_format)
+            checkpoint_path, checkpoint = self.save_checkpoint(trainer=trainer, 
+                                                               directory=self.directory, 
+                                                               filename_format=self.filename_format)
             
             improvement_delta = abs(value - self.best_value)
             message = f"'best_value' is improved by {improvement_delta}! New 'best_value': {value}. Checkpoint path: '{checkpoint_path}'."
             print(message)
 
-            self.append_candidate(checkpoint_path)
+            self.append_candidate(candidates_list=self.all_candidates, path=checkpoint_path)
             
             self.best_value = value
             trainer.history["best_checkpoint_path"] = checkpoint_path
             is_saved = True
 
-            self.__select_candidates()
+            self.__select_candidates(candidates_list=self.all_candidates)
 
             # removing checkpoint from memory
             del checkpoint
@@ -176,6 +162,9 @@ class ModelCheckpoint(Callback):
                 checkpoint_path, checkpoint = self.save_checkpoint(trainer=trainer, 
                                                                    directory=self.save_interval_directory, 
                                                                    filename_format=filename_format)
+                
+                self.append_candidate(candidates_list=self.all_interval_candidates, path=checkpoint_path)
+                self.__select_candidates(candidates_list=self.all_interval_candidates)
 
     
     def on_epoch_end(self, trainer) -> None:
@@ -187,6 +176,9 @@ class ModelCheckpoint(Callback):
                 checkpoint_path, checkpoint = self.save_checkpoint(trainer=trainer, 
                                                                    directory=self.save_interval_directory, 
                                                                    filename_format=filename_format)
+                
+                self.append_candidate(candidates_list=self.all_interval_candidates, path=checkpoint_path)
+                self.__select_candidates(candidates_list=self.all_interval_candidates)
 
 
     def save_checkpoint(self, trainer, directory=None, filename_format="checkpoint.pth", **kwargs):

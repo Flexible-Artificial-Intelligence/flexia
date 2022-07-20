@@ -14,6 +14,8 @@
 
 
 from .enums import Modes
+import shutil
+import os
 
 
 def get_delta_value(value, delta=0.0, mode="min"):
@@ -28,3 +30,18 @@ def compare(value, other, mode="min"):
     condition = (value < other) if mode == Modes.MIN else (value > other)
     
     return condition
+
+
+def remove_files_from_directory(self, directory:str) -> None:
+    """
+    Removes all files and folders from directory.
+    """
+        
+    filenames = os.listdir(directory)
+    pathes = [os.path.join(directory, filename) for filename in filenames]
+        
+    for path in pathes:
+        if os.path.isfile(path) or os.path.islink(path):
+            os.unlink(path)
+        elif os.path.isdir(path):
+            shutil.rmtree(path)

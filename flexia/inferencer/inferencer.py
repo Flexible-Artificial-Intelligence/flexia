@@ -27,7 +27,8 @@ from ..third_party.addict import Dict
 from ..timer import Timer
 from .utils import exception_handler
 from .enums import InferencerStates
-from ..utils import initialize_device
+from ..utils import initialize_device, precision_dtypes
+from ..enums import Precision
 
 
 logger = logging.getLogger(__name__)
@@ -37,23 +38,25 @@ class Inferencer(ABC):
     def __init__(self, 
                  model:nn.Module, 
                  device="cpu", 
+                 precision="fp32",
                  amp:bool=False, 
                  loggers:Union[str, list]=[],
-                 callbacks=[], 
-                 time_format:str="{hours:02d}:{minutes:02d}:{seconds:02d}"):
+                 callbacks=[]):
 
 
         self.model = model
         self.device = device
+        self.precision = Precision(precision)
         self.amp = amp
-        self.time_format = time_format
         self.loggers = loggers
         self.callbacks = callbacks
         self.device = initialize_device(self.device)
+        self.device_type = self.device.type
 
         self._state = InferencerStates.INIT_START
         self.state = self._state
 
+        self.precision_dtype = precision_dtypes[self.precision.value]
         self.loader = None
         self.history = Dict()
 
@@ -93,7 +96,7 @@ class Inferencer(ABC):
         self.loader = loader      
         steps = len(self.loader)
         self.history["steps"] = steps
-        timer = Timer(self.time_format)
+        timer = Timer()
         outputs = []
 
         self.state = InferencerStates.PREDICTION_START
@@ -104,7 +107,7 @@ class Inferencer(ABC):
             self.history["step"] = step
             
             with torch.no_grad():
-                with autocast(enabled=self.amp):
+                with torch.autocast(device_type=self.device.type, dtype=self.precision_dtype, enabled=self.amp):
                     self.state = InferencerStates.PREDICTION_STEP_START
 
                     batch_outputs = self.prediction_step(batch=batch)
@@ -117,11 +120,11 @@ class Inferencer(ABC):
                     
                     self.state = InferencerStates.PREDICTION_STEP_END
 
-                    batch_outputs = batch_outputs.to("cpu").numpy()
+                    batch_outputs = batch_outputs.to("cpu")
                     outputs.extend(batch_outputs)
                     
         self.state = InferencerStates.PREDICTION_END
 
-        outputs = np.array(outputs)
+        outputs = torch.cat(outputs, dim=0)
     
         return outputs

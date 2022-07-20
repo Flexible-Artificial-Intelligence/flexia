@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 
-install_requires = ["tqdm", "numpy", "wandb", "torch", "transformers"]
+install_requires = ["numpy", "torch"]
 
 setup(
     name="flexia",

@@ -1,5 +1,2 @@
 torch==1.11.0
 numpy==1.23.0
-wandb==0.12.14
-transformers==4.6.1
-tqdm==4.64.0

@@ -32,3 +32,9 @@ class OptimizerLibraries(ExplicitEnum):
     TRANSFORMERS = "transformers"
     TORCH = "torch"
     BITSANDBYTES = "bitsandbytes"
+
+
+class Precision(ExplicitEnum):
+    FP32 = "fp32"
+    FP16 = "fp16"
+    BF16 = "bf16"

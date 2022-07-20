@@ -38,6 +38,14 @@ if is_bitsandbytes_available():
     import bitsandbytes as bnb
 
 
+
+precision_dtypes = {
+    "fp32": torch.float32,
+    "fp16": torch.float16,
+    "bf16": torch.bfloat16
+}
+
+
 def initialize_device(device:Optional[Union[str, torch.device]]=None):
     if device is None:
         device_name = "cuda" if torch.cuda.is_available() else "cpu"

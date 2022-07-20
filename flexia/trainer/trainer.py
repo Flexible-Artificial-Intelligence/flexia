@@ -15,7 +15,7 @@
 
 import torch
 from torch import nn, optim
-from torch.cuda.amp import GradScaler, autocast
+from torch.cuda.amp import GradScaler
 from torch.optim import lr_scheduler
 from typing import Optional, Union, Any, Tuple, List
 from torch.utils.data import DataLoader
@@ -29,12 +29,13 @@ from ..timer import Timer
 from ..averager import Averager
 from ..loggers import Logger
 from ..callbacks import Callback
-from ..utils import get_lr, initialize_device
-from ..loggers import LoggingLogger
+from ..utils import get_lr, initialize_device, precision_dtypes
 from ..third_party.addict import Dict
+from ..enums import Precision
 
 
 logger = logging.getLogger(__name__)
+
 
 class Trainer(ABC):
     def __init__(self, 
@@ -45,8 +46,8 @@ class Trainer(ABC):
                  gradient_accumulation_steps:int=1, 
                  gradient_scaling:bool=False, 
                  scaler:Optional["GradScaler"]=None,
-                 gradient_norm:float=0, 
-                 amp:bool=False, 
+                 precision="fp32",
+                 gradient_norm:float=None, 
                  device:Optional[Union[str, torch.device]]="cpu", 
                  validation_strategy:str="epoch",
                  validation_steps:int=1, 
@@ -61,8 +62,8 @@ class Trainer(ABC):
         self.scheduling_strategy = SchedulingStrategy(scheduling_strategy)
         self.gradient_accumulation_steps = gradient_accumulation_steps
         self.gradient_scaling = gradient_scaling
+        self.precision = Precision(precision)
         self.gradient_norm = gradient_norm
-        self.amp = amp
         self.device = device
         self.validation_strategy = ValidationStrategy(validation_strategy)
         self.validation_steps = validation_steps
@@ -76,14 +77,25 @@ class Trainer(ABC):
         self.state = self._state
         
 
+        if not isinstance(self.model, nn.Module):
+            raise TypeError("model")
+
+        if not isinstance(self.optimizer, optim.Optimizer):
+            raise TypeError("optimizer")
+
+
         assert 0 < self.epochs, f"`epochs` must be greater than 0, but given {self.epochs}."
-        assert isinstance(self.model, nn.Module), f"`model` must be subinstance of `torch.nn.Module`, but given `{type(self.model)}`"
         assert isinstance(self.gradient_accumulation_steps, int), f"`gradient_accumulation_steps` must be integer type, but given `{type(self.gradient_accumulation_steps)}`"
 
+        self.precision_dtype = precision_dtypes.get(self.precision, torch.float32)
         self.device = initialize_device(self.device)
+        self.device_type = self.device.type
 
-        if self.gradient_scaling and self.scaler is None and self.amp:
-            self.scaler = GradScaler()
+        if self.device_type == "cuda":
+            if self.gradient_scaling and self.scaler is None:
+                self.scaler = GradScaler()
+        else:
+            self.scaler = None
 
         self.history = Dict({
             "step": 0,
@@ -252,7 +264,7 @@ class Trainer(ABC):
         return get_lr(optimizer=self.optimizer, only_last=True, key="lr")
 
     def backward_step(self, loss:torch.Tensor) -> torch.Tensor:
-        if self.scaler is not None and self.amp:
+        if self.scaler is not None:
             self.scaler.scale(loss).backward()
         else:
             loss.backward()
@@ -263,7 +275,7 @@ class Trainer(ABC):
     def optimization_step(self) -> None:     
         self.clip_gradients()
 
-        if self.scaler is not None and self.amp:
+        if self.scaler is not None:
             self.scaler.step(self.optimizer)
             self.scaler.update()
         else:
@@ -283,9 +295,8 @@ class Trainer(ABC):
 
                     
     def training_step(self, batch:Any) -> Tuple[torch.Tensor, dict]:
-
         self.model.train()
-        with autocast(enabled=self.amp):
+        with torch.autocast(device_type=self.device.type, dtype=self.precision_dtype, enabled=True):
             loss, outputs = self.compute_loss(batch=batch, return_outputs=True)
             metrics = self.compute_metrics(batch=batch, predictions=outputs)
 
@@ -297,12 +308,13 @@ class Trainer(ABC):
         return loss.detach(), metrics
                 
     def clip_gradients(self) -> None:
-        if self.gradient_norm > 0:
-            if self.gradient_scaling:
+        if self.gradient_norm is not None:
+            if self.scaler is not None:
                 self.scaler.unscale_(self.optimizer)
             
             nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.gradient_norm)
     
+
     @exception_handler
     def validation_loop(self, loader:DataLoader) -> Tuple[Any, dict]:
         self.validation_loader = loader
@@ -319,7 +331,7 @@ class Trainer(ABC):
 
         for step, batch in enumerate(self.validation_loader, 1):
             with torch.no_grad():
-                with autocast(enabled=self.amp):
+                with torch.autocast(device_type=self.device.type, dtype=self.precision_dtype, enabled=True):
                     batch_size = len(batch)
 
                     self.state = TrainerStates.VALIDATION_STEP_START

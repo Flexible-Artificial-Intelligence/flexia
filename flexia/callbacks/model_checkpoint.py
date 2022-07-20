@@ -48,7 +48,7 @@ class ModelCheckpoint(Callback):
                 save_interval=None, 
                 save_interval_strategy="epoch", 
                 save_interval_directory=None, 
-                save_interval_filename_format="checkpoint_{epoch}.pth"):
+                save_interval_filename_format=None):
         
         self.monitor_value = monitor_value
         self.mode = Modes(mode)
@@ -83,7 +83,13 @@ class ModelCheckpoint(Callback):
                     remove_files_from_directory(directory=self.directory)
             else:
                 raise NotADirectoryError(f"'{self.directory}' is not directory.")
-        
+
+        if self.save_interval_filename_format is None:
+            if self.save_interval_strategy == IntervalStrategies.EPOCH:
+                self.save_interval_filename_format = "checkpoint_{epoch}.pth"
+            else:
+                self.save_interval_filename_format = "checkpoint_{step}.pth"
+    
         self.all_candidates = []
         self.all_interval_candidates = []
     

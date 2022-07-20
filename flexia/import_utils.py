@@ -47,3 +47,15 @@ def is_bitsandbytes_available() -> bool:
         return True
     except:
         return False
+
+
+def is_pandas_available() -> bool:
+    """
+    Checks the availablity of `pandas` library.    
+    """
+
+    try:
+        import pandas
+        return True
+    except:
+        return False

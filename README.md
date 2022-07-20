@@ -69,7 +69,7 @@ Flexia has communication channels in some popular social networks. There you can
 - [ ] DeepSpeed integration
 - [ ] Resuming Trainer and Inferencer history, states for callbacks.
 - [ ] Callbacks
-    - [ ] Callback for saving checkpoints every n steps epochs.
+    - [x] Callback for saving checkpoints every n steps epochs.
     - [ ] Add verbose for callbacks
 - [ ] Loggers
     - [ ] DataFrameLogger

@@ -131,7 +131,7 @@ class Hook:
         Called when the exception raises.
         """
 
-        pass
+        self.on_training_end(trainer=trainer)
 
     def on_prediction_start(self, inferencer) -> None:
         """

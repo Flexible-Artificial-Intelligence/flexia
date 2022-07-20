@@ -365,7 +365,7 @@ class Trainer(ABC):
                         outputs.extend(batch_outputs.to("cpu"))
 
         if self.return_validation_outputs:
-            outputs = torch.tensor(outputs, dtype=self.precision_dtype)
+            outputs = torch.cat(outputs, dim=0)
         else:
             outputs = None
 

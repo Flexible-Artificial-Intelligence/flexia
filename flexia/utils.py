@@ -42,7 +42,7 @@ if is_bitsandbytes_available():
 precision_dtypes = {
     "fp32": torch.float32,
     "fp16": torch.float16,
-    "bf16": torch.bfloat16
+    "bf16": torch.bfloat16,
 }
 
 

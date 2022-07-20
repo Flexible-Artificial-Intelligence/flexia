@@ -87,7 +87,7 @@ class Trainer(ABC):
         assert 0 < self.epochs, f"`epochs` must be greater than 0, but given {self.epochs}."
         assert isinstance(self.gradient_accumulation_steps, int), f"`gradient_accumulation_steps` must be integer type, but given `{type(self.gradient_accumulation_steps)}`"
 
-        self.precision_dtype = precision_dtypes.get(self.precision, torch.float32)
+        self.precision_dtype = precision_dtypes[self.precision.value]
         self.device = initialize_device(self.device)
         self.device_type = self.device.type
 

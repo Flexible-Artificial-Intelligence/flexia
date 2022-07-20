@@ -62,15 +62,21 @@ Flexia has communication channels in some popular social networks. There you can
 ## TO-DO
 
 - [ ] Documentation (readthedocs)
-- [ ] PyPi
+    - [ ] Comments to the code.
+    - [ ] Add annotations of the types to the function and methods arguments.
+    - [ ] Write documentation for the functions and methods.
+- [ ] PyPi package
 - [ ] Distributed Training
+- [ ] More warnings for function and methods arguments.
 - [ ] DeepSpeed integration
+- [ ] Resuming Trainer and Inferencer history, states for callbacks.
 - [ ] Callbacks
-    - [x] Model Checkpoint
-    - [x] Early Stopping
-    - [x] Timing
-    - [x] Lambda
-- [x] Inferencer
+    - [ ] Callback for saving checkpoints every n steps epochs.
+    - [ ] Add verbose for callbacks
+- [ ] Loggers
+    - [ ] DataFrameLogger
+- [ ] Callbacks and loggers list wrapper.
+- [ ] Add a specific logger for each python module.
 - [ ] Torch XLA
 - [ ] Examples
     - [ ] Digit Recognizer

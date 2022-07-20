@@ -32,7 +32,7 @@ def compare(value, other, mode="min"):
     return condition
 
 
-def remove_files_from_directory(self, directory:str) -> None:
+def remove_files_from_directory(directory:str) -> None:
     """
     Removes all files and folders from directory.
     """

@@ -47,7 +47,8 @@ class ModelCheckpoint(Callback):
                 save_checkpoint_on_exception=True, 
                 save_interval=None, 
                 save_interval_strategy="epoch", 
-                save_interval_directory=None):
+                save_interval_directory=None, 
+                save_interval_filename_format="checkpoint_{epoch}.pth"):
         
         self.monitor_value = monitor_value
         self.mode = Modes(mode)
@@ -63,6 +64,7 @@ class ModelCheckpoint(Callback):
         self.save_interval = save_interval
         self.save_interval_strategy = IntervalStrategies(save_interval_strategy)
         self.save_interval_directory = save_interval_directory
+        self.save_interval_filename_format = save_interval_filename_format
         
         self.best_value = np.inf if self.mode == Modes.MIN else -np.inf
         
@@ -158,13 +160,7 @@ class ModelCheckpoint(Callback):
             step = trainer.history["step"]
 
             if step % self.save_interval == 0:
-                filename_format = "checkpoint_step_{step}.pth"
-                checkpoint_path, checkpoint = self.save_checkpoint(trainer=trainer, 
-                                                                   directory=self.save_interval_directory, 
-                                                                   filename_format=filename_format)
-                
-                self.append_candidate(candidates_list=self.all_interval_candidates, path=checkpoint_path)
-                self.__select_candidates(candidates_list=self.all_interval_candidates)
+                self.save_interval_checkpoint(trainer=trainer)
 
     
     def on_epoch_end(self, trainer) -> None:
@@ -172,13 +168,16 @@ class ModelCheckpoint(Callback):
             epoch = trainer.history["epoch"]
 
             if epoch % self.save_interval == 0:
-                filename_format = "checkpoint_epoch_{epoch}.pth"
-                checkpoint_path, checkpoint = self.save_checkpoint(trainer=trainer, 
-                                                                   directory=self.save_interval_directory, 
-                                                                   filename_format=filename_format)
+                self.save_interval_checkpoint(trainer=trainer)
+
+
+    def save_interval_checkpoint(self, trainer):
+        checkpoint_path, checkpoint = self.save_checkpoint(trainer=trainer, 
+                                                           directory=self.save_interval_directory, 
+                                                           filename_format=self.save_interval_filename_format)
                 
-                self.append_candidate(candidates_list=self.all_interval_candidates, path=checkpoint_path)
-                self.__select_candidates(candidates_list=self.all_interval_candidates)
+        self.append_candidate(candidates_list=self.all_interval_candidates, path=checkpoint_path)
+        self.__select_candidates(candidates_list=self.all_interval_candidates)
 
 
     def save_checkpoint(self, trainer, directory=None, filename_format="checkpoint.pth", **kwargs):

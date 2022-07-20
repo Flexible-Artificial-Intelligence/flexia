@@ -13,9 +13,9 @@
 # limitations under the License.
 
 
-from prometheus_client import Enum
+
 from ..enums import ExplicitEnum
-from ..hook import States
+from enum import Enum
 
 
 class ValidationStrategy(ExplicitEnum):

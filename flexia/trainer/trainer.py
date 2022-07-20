@@ -362,10 +362,10 @@ class Trainer(ABC):
                     self.state = TrainerStates.VALIDATION_STEP_END
 
                     if self.return_validation_outputs:
-                        outputs.extend(batch_outputs.to("cpu").numpy())
+                        outputs.extend(batch_outputs.to("cpu"))
 
         if self.return_validation_outputs:
-            outputs = np.asarray(outputs)
+            outputs = torch.tensor(outputs, dtype=self.precision_dtype)
         else:
             outputs = None
 

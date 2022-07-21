@@ -45,8 +45,6 @@ class Trainer:
                  gradient_accumulation_steps:int=1, 
                  gradient_scaling:bool=False, 
                  scaler:Optional["GradScaler"]=None,
-                 #compute_loss=None,
-                 compute_metrics=None,
                  precision="fp32",
                  amp=False,
                  gradient_norm:float=None, 
@@ -70,8 +68,6 @@ class Trainer:
         self.validation_strategy = IntervalStrategy(validation_strategy)
         self.validation_steps = validation_steps
         self.scaler = scaler
-        #self.compute_loss = compute_loss
-        self.compute_metrics = compute_metrics
         self.loggers = loggers
         self.epochs = epochs
         self.callbacks = callbacks
@@ -99,10 +95,6 @@ class Trainer:
                 self.scaler = GradScaler()
         else:
             self.scaler = None
-
-        if self.compute_metrics is None:
-            self.compute_metrics = lambda batch, outputs: {}
-
 
         self.history = Dict({
             "step": 0,

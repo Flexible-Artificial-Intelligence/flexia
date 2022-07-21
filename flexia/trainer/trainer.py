@@ -303,6 +303,7 @@ class Trainer(ABC):
         self.model.train()
         with torch.autocast(device_type=self.device.type, dtype=self.precision_dtype, enabled=self.amp):
             loss, outputs = self.compute_loss(batch=batch, return_outputs=True)
+            outputs = outputs.detach()
             metrics = self.compute_metrics(batch=batch, outputs=outputs)
 
             if self.gradient_accumulation_steps > 1:
@@ -342,6 +343,7 @@ class Trainer(ABC):
                     self.state = TrainerState.VALIDATION_STEP_START
 
                     batch_loss, batch_outputs = self.compute_loss(batch=batch, return_outputs=True)
+                    batch_outputs = batch_outputs.detach()
                     batch_metrics = self.compute_metrics(batch=batch, outputs=batch_outputs)
 
                     loss.update(batch_loss.item(), n=batch_size)

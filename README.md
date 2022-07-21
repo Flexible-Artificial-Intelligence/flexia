@@ -59,34 +59,31 @@ Flexia has communication channels in some popular social networks. There you can
 
 ## TO-DO
 
-- [ ] Documentation (readthedocs)
-    - [ ] Comments to the code.
-    - [ ] Add annotations of the types to the function and methods arguments.
-    - [ ] Write documentation for the functions and methods.
-- [ ] PyPi package
-- [ ] Distributed Training
-- [ ] More warnings for function and methods arguments.
-- [ ] DeepSpeed integration
-- [ ] Resuming Trainer and Inferencer history, states for callbacks.
-- [ ] Callbacks
-    - [x] Callback for saving checkpoints every n steps epochs.
-    - [ ] Add verbose for callbacks
-    - [ ] Add some environment variables to WANDB Logger
-- [ ] Loggers
+- Documentation
+    - [ ] Comments in the code.
+    - [ ] Types Annotations
+    - [ ] Docstrings 
+    - [ ] Warnings and Exceptions
+
+- Trainer
+    - [ ] Resuming Trainer history (state dictionary)
+
+- Callbacks
+    - [ ] Verbosity
+    - [ ] List wrapper
+
+- Loggers
     - [ ] DataFrameLogger
-- [ ] Callbacks and loggers list wrapper.
-- [ ] Add a specific logger for each python module.
+    - [ ] Environment variables in `WANDBLogger`
+    - [ ] List wrapper
+
+- [ ] Distributed Training
 - [ ] Torch XLA
-- [ ] Examples
-    - [ ] Digit Recognizer
-    - [ ] Global Wheat Detection
-    - [ ] Carvana Image Masking Challenge
+- [ ] DeepSpeed integration
+- [ ] PyPi package
 - [ ] ONNX
 - [ ] ONNXRuntime
 - [ ] TensorRT
 - [ ] Tests
-- [x] Epoch as floating type
-- [x] `compute_metrics` as arguments to the initialization function.
-- [x] Avoid of using a lot of subclasses, for example, SchedulingStategy, Validation Strategy to IntervalStategy (step, epoch, off)
 
 ## Releases

@@ -19,3 +19,6 @@ from .timer import Timer
 from .trainer import Trainer
 from .inferencer import Inferencer
 from .multi_sample_dropout import MultiSampleDropout
+
+
+__version__ = "1.0.0"

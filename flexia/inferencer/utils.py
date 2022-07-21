@@ -1,4 +1,4 @@
-from .enums import InferencerStates
+from .enums import InferencerState
 
 
 def exception_handler(function):
@@ -8,7 +8,7 @@ def exception_handler(function):
             output = function(*args, **kwargs)
             return output
         except Exception as error:
-            instance.state = InferencerStates.EXCEPTION
+            instance.state = InferencerState.EXCEPTION
             raise error
 
     return handler

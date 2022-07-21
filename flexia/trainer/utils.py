@@ -1,4 +1,4 @@
-from .enums import TrainerStates
+from .enums import TrainerState
 
 
 def exception_handler(function):
@@ -8,7 +8,7 @@ def exception_handler(function):
             output = function(*args, **kwargs)
             return output
         except Exception as error:
-            instance.state = TrainerStates.EXCEPTION
+            instance.state = TrainerState.EXCEPTION
             raise error
 
     return handler

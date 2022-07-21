@@ -22,7 +22,7 @@ from torch.utils.data import DataLoader
 import numpy as np
 import logging
 
-from ..enums import TrainerState
+from .enums import TrainerState
 from .utils import exception_handler
 from ..timer import Timer
 from ..averager import Averager

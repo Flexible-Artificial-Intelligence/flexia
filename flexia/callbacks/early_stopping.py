@@ -17,7 +17,7 @@ from typing import  Union, Optional
 import numpy as np
 import logging
 
-from ..trainer.enums import TrainerStates
+from ..trainer.enums import TrainerState
 from .callback import Callback
 from .utils import compare, get_delta_value
 from .enums import Modes
@@ -62,7 +62,7 @@ class EarlyStopping(Callback):
         self.check(value=value)
 
         if self.stop:
-            trainer.state = TrainerStates.TRAINING_STOP
+            trainer.state = TrainerState.TRAINING_STOP
             print(self.case)
 
     

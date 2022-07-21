@@ -18,7 +18,7 @@ from datetime import timedelta
 import logging
 
 from .callback import Callback
-from ..trainer.enums import TrainerStates
+from ..trainer.enums import TrainerState
 
 
 logger = logging.getLogger(__name__)
@@ -53,7 +53,7 @@ class Timing(Callback):
         self.stop = self.check(elapsed)
         
         if self.stop:
-            trainer.state = TrainerStates.TRAINING_STOP
+            trainer.state = TrainerState.TRAINING_STOP
         
     def check(self, elapsed) -> bool:       
         stop = elapsed > self.duration

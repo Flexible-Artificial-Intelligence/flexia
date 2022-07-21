@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+from abc import ABC, abstractmethod
 import torch
 from torch import nn
 from typing import  Union, Any
@@ -31,15 +32,14 @@ from ..enums import Precision
 logger = logging.getLogger(__name__)
 
 
-class Inferencer:
+class Inferencer(ABC):
     def __init__(self, 
                  model:nn.Module, 
                  device="cpu", 
                  precision="fp32",
                  amp:bool=False, 
                  loggers:Union[str, list]=[],
-                 callbacks=[], 
-                 prediction_step=None):
+                 callbacks=[]):
 
 
         self.model = model
@@ -48,15 +48,12 @@ class Inferencer:
         self.amp = amp
         self.loggers = loggers
         self.callbacks = callbacks
-        self.prediction_step = prediction_step
         self.device = initialize_device(self.device)
         self.device_type = self.device.type
 
         self._state = InferencerState.INIT_START
         self.state = self._state
 
-        if self.prediction_step is None:
-            self.prediction_step = lambda batch: []
 
         self.precision_dtype = precision_dtypes[self.precision.value]
         self.loader = None
@@ -89,7 +86,10 @@ class Inferencer:
         self.__runner(instances=self.loggers)
         self.__runner(instances=self.callbacks)
 
-        
+    @abstractmethod
+    def prediction_step(self, batch:Any):
+        pass
+
     @exception_handler
     def predict(self, loader:DataLoader):
         self.loader = loader      

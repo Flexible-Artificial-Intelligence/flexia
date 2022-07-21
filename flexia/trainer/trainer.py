@@ -19,6 +19,7 @@ from torch.cuda.amp import GradScaler
 from torch.optim import lr_scheduler
 from typing import Optional, Union, Any, Tuple, List
 from torch.utils.data import DataLoader
+from abc import ABC, abstractmethod
 import numpy as np
 import logging
 
@@ -36,7 +37,7 @@ from ..enums import Precision, IntervalStrategy
 logger = logging.getLogger(__name__)
 
 
-class Trainer:
+class Trainer(ABC):
     def __init__(self, 
                  model:nn.Module, 
                  optimizer:optim.Optimizer,
@@ -378,10 +379,14 @@ class Trainer:
 
         return (loss.average, metrics.average, outputs)
 
+    @abstractmethod
     def compute_loss(self, 
                       batch:Any, 
                       return_outputs:bool=True) -> torch.Tensor:
         pass
+
+    def compute_metrics(self, batch:Any, outputs):
+        return {}
 
     def on_validation_end(self, outputs) -> None:
         """

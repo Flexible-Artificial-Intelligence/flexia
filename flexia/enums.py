@@ -23,12 +23,12 @@ class ExplicitEnum(Enum):
         raise ValueError(f"`{value}` is not a valid `{cls.__name__}`, select one of `{keys}`.")
 
 
-class SchedulerLibraries(ExplicitEnum):
+class SchedulerLibrary(ExplicitEnum):
     TRANSFORMERS = "transformers"
     TORCH = "torch"
 
 
-class OptimizerLibraries(ExplicitEnum):
+class OptimizerLibrary(ExplicitEnum):
     TRANSFORMERS = "transformers"
     TORCH = "torch"
     BITSANDBYTES = "bitsandbytes"
@@ -38,3 +38,9 @@ class Precision(ExplicitEnum):
     FP32 = "fp32"
     FP16 = "fp16"
     BF16 = "bf16"
+
+
+class IntervalStrategy(ExplicitEnum):
+    EPOCH = "epoch"
+    STEP = "step"
+    OFF = "off"

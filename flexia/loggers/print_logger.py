@@ -54,7 +54,7 @@ class PrintLogger(Logger):
 
             metrics_string = format_metrics(metrics=train_metrics_epoch, decimals=self.decimals, sep=self.sep)
 
-            print(f"epoch: {epoch:{epochs_margin}d}/{epochs:{epochs_margin}d}{self.sep}"
+            print(f"epoch: {epoch:{epochs_margin}.2d}/{epochs:{epochs_margin}d}{self.sep}"
                   f"step: {step:{steps_margin}d}/{steps:{steps_margin}d}{self.sep}"
                   f"elapsed: {elapsed}{self.sep}"
                   f"remain: {remain}{self.sep}"

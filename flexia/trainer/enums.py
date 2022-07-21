@@ -13,22 +13,10 @@
 # limitations under the License.
 
 
-
-from ..enums import ExplicitEnum
 from enum import Enum
 
 
-class ValidationStrategy(ExplicitEnum):
-    EPOCH = "epoch"
-    STEP = "step"
-    
-    
-class SchedulingStrategy(ExplicitEnum):
-    EPOCH = "epoch"
-    STEP = "step"
-
-
-class TrainerStates(Enum):
+class TrainerState(Enum):
     INIT_START = "on_init_start"
     INIT_END = "on_init_end"
     TRAINING_START = "on_training_start"

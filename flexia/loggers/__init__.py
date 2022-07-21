@@ -18,3 +18,4 @@ from .print_logger import PrintLogger
 from .wandb_logger import WANDBLogger
 from .logger import Logger
 from .tqdm_logger import TQDMLogger
+from .data_frame_logger import DataFrameLogger

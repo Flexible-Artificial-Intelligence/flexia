@@ -71,6 +71,7 @@ Flexia has communication channels in some popular social networks. There you can
 - [ ] Callbacks
     - [x] Callback for saving checkpoints every n steps epochs.
     - [ ] Add verbose for callbacks
+    - [ ] Add some environment variables to WANDB Logger
 - [ ] Loggers
     - [ ] DataFrameLogger
 - [ ] Callbacks and loggers list wrapper.
@@ -84,5 +85,8 @@ Flexia has communication channels in some popular social networks. There you can
 - [ ] ONNXRuntime
 - [ ] TensorRT
 - [ ] Tests
+- [x] Epoch as floating type
+- [x] `compute_metrics` as arguments to the initialization function.
+- [x] Avoid of using a lot of subclasses, for example, SchedulingStategy, Validation Strategy to IntervalStategy (step, epoch, off)
 
 ## Releases

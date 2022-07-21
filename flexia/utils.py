@@ -26,7 +26,7 @@ import logging
 
 from .import_utils import is_transformers_available, is_bitsandbytes_available
 from .exceptions import LibraryException
-from .enums import SchedulerLibraries, OptimizerLibraries
+from .enums import SchedulerLibrary, OptimizerLibrary
 
 
 logger = logging.getLogger(__name__)
@@ -222,15 +222,15 @@ def get_scheduler(optimizer:Optimizer, name:str="LinearLR", parameters:dict={}, 
     """
 
 
-    library = SchedulerLibraries(library)
+    library = SchedulerLibrary(library)
 
-    if library == SchedulerLibraries.TORCH:
+    if library == SchedulerLibrary.TORCH:
         scheduler = __get_from_library(library=lr_scheduler, 
                                        name=name, 
                                        parameters=parameters, 
                                        optimizer=optimizer)
 
-    elif library == SchedulerLibraries.TRANSFORMERS:
+    elif library == SchedulerLibrary.TRANSFORMERS:
         if is_transformers_available():
             scheduler = __get_from_library(library=transformers, 
                                            name=name, 
@@ -258,15 +258,15 @@ def get_optimizer(model_parameters:Any, name:str="AdamW", parameters:dict={}, li
     """
 
 
-    library = OptimizerLibraries(library)
+    library = OptimizerLibrary(library)
 
-    if library == OptimizerLibraries.TORCH:
+    if library == OptimizerLibrary.TORCH:
         optimizer = __get_from_library(library=optim, 
                                        name=name, 
                                        parameters=parameters, 
                                        params=model_parameters)
 
-    elif library == OptimizerLibraries.TRANSFORMERS:
+    elif library == OptimizerLibrary.TRANSFORMERS:
         if is_transformers_available():
             optimizer = __get_from_library(library=transformers, 
                                            name=name, 
@@ -275,7 +275,7 @@ def get_optimizer(model_parameters:Any, name:str="AdamW", parameters:dict={}, li
         else:
             raise LibraryException("transformers")
 
-    elif library == OptimizerLibraries.BITSANDBYTES:
+    elif library == OptimizerLibrary.BITSANDBYTES:
         if is_bitsandbytes_available():
             optimizer = __get_from_library(library=bnb.optim, 
                                            name=name, 

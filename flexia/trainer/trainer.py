@@ -20,10 +20,9 @@ from torch.optim import lr_scheduler
 from typing import Optional, Union, Any, Tuple, List
 from torch.utils.data import DataLoader
 import numpy as np
-from abc import ABC, abstractmethod
 import logging
 
-from .enums import SchedulingStrategy, ValidationStrategy, TrainerStates
+from ..enums import TrainerState
 from .utils import exception_handler
 from ..timer import Timer
 from ..averager import Averager
@@ -31,13 +30,13 @@ from ..loggers import Logger
 from ..callbacks import Callback
 from ..utils import get_lr, initialize_device, precision_dtypes
 from ..third_party.addict import Dict
-from ..enums import Precision
+from ..enums import Precision, IntervalStrategy
 
 
 logger = logging.getLogger(__name__)
 
 
-class Trainer(ABC):
+class Trainer:
     def __init__(self, 
                  model:nn.Module, 
                  optimizer:optim.Optimizer,
@@ -46,6 +45,8 @@ class Trainer(ABC):
                  gradient_accumulation_steps:int=1, 
                  gradient_scaling:bool=False, 
                  scaler:Optional["GradScaler"]=None,
+                 #compute_loss=None,
+                 compute_metrics=None,
                  precision="fp32",
                  amp=False,
                  gradient_norm:float=None, 
@@ -59,21 +60,23 @@ class Trainer(ABC):
         self.model = model
         self.optimizer = optimizer
         self.scheduler = scheduler
-        self.scheduling_strategy = SchedulingStrategy(scheduling_strategy)
+        self.scheduling_strategy = IntervalStrategy(scheduling_strategy)
         self.gradient_accumulation_steps = gradient_accumulation_steps
         self.gradient_scaling = gradient_scaling
         self.precision = Precision(precision)
         self.gradient_norm = gradient_norm
         self.amp = amp
         self.device = device
-        self.validation_strategy = ValidationStrategy(validation_strategy)
+        self.validation_strategy = IntervalStrategy(validation_strategy)
         self.validation_steps = validation_steps
         self.scaler = scaler
+        #self.compute_loss = compute_loss
+        self.compute_metrics = compute_metrics
         self.loggers = loggers
         self.epochs = epochs
         self.callbacks = callbacks
 
-        self._state = TrainerStates.INIT_START
+        self._state = TrainerState.INIT_START
         self.state = self._state
         
 
@@ -97,6 +100,10 @@ class Trainer(ABC):
         else:
             self.scaler = None
 
+        if self.compute_metrics is None:
+            self.compute_metrics = lambda batch, outputs: {}
+
+
         self.history = Dict({
             "step": 0,
             "epoch": 0,
@@ -107,7 +114,7 @@ class Trainer(ABC):
         
         self.train_loader, self.validation_loader = None, None
         
-        self.state = TrainerStates.INIT_END
+        self.state = TrainerState.INIT_END
 
     def __runner(self, instances:Optional[List[Union["Callback", "Logger"]]]=None, *args, **kwargs) -> None:
         def run(instance):
@@ -130,7 +137,7 @@ class Trainer(ABC):
 
     @state.setter
     def state(self, value):
-        if self.state != TrainerStates.TRAINING_STOP:
+        if self.state != TrainerState.TRAINING_STOP:
             self._state = value
 
         self.__runner(instances=self.loggers)
@@ -148,7 +155,7 @@ class Trainer(ABC):
 
         self.model.to(self.device)
         
-        if self.validation_strategy == ValidationStrategy.EPOCH:
+        if self.validation_strategy == IntervalStrategy.EPOCH:
             self.validation_steps = len(self.train_loader) * self.validation_steps
         else:
             # validation model after N training steps!
@@ -165,7 +172,7 @@ class Trainer(ABC):
 
         train_loss, train_metrics = Averager(), Averager()
 
-        self.state = TrainerStates.TRAINING_START
+        self.state = TrainerState.TRAINING_START
 
         timer = Timer()
         for epoch in range(1, self.epochs+1):
@@ -174,16 +181,17 @@ class Trainer(ABC):
             epoch_train_loss, epoch_train_metrics = Averager(), Averager()
             epoch_timer = Timer()
             
-            self.state = TrainerStates.EPOCH_START
+            self.state = TrainerState.EPOCH_START
 
             self.model.zero_grad(set_to_none=True)
             for step, batch in enumerate(self.train_loader, 1):
+                self.history["epoch"] += round((step / steps), 2)
                 self.history["step"] += 1
                 self.history["step_epoch"] = step
                 
                 batch_size = len(batch)
                 
-                self.state = TrainerStates.TRAINING_STEP_START
+                self.state = TrainerState.TRAINING_STEP_START
 
                 batch_loss, batch_metrics = self.training_step(batch=batch)
 
@@ -192,7 +200,7 @@ class Trainer(ABC):
                 if (step % self.gradient_accumulation_steps == 0) or (step == steps):
                     self.optimization_step()
 
-                    if self.scheduling_strategy == SchedulingStrategy.STEP:
+                    if self.scheduling_strategy == IntervalStrategy.STEP:
                         self.scheduling_step(loop="training")
 
                 if self.gradient_accumulation_steps > 1:
@@ -226,7 +234,7 @@ class Trainer(ABC):
                 self.__update_history_data(data=epoch_train_metrics.average, key_format="train_{key}_epoch")
                 
 
-                self.state = TrainerStates.TRAINING_STEP_END
+                self.state = TrainerState.TRAINING_STEP_END
 
                 if self.validation_loader is not None:
                     if (self.history["step"] % self.validation_steps) == 0:
@@ -235,7 +243,7 @@ class Trainer(ABC):
 
                         self.scheduling_step(loss=validation_loss, loop="validation")
 
-                        if self.state == TrainerStates.CHECKPOINT_SAVE:
+                        if self.state == TrainerState.CHECKPOINT_SAVE:
                             self.history.update({
                                 "best_validation_loss": self.history["validation_loss"],
                                 "best_validation_metrics": self.history["validation_metrics"],
@@ -246,15 +254,15 @@ class Trainer(ABC):
 
                         del validation_outputs
 
-                if self.state == TrainerStates.TRAINING_STOP:
+                if self.state == TrainerState.TRAINING_STOP:
                     return self.history
 
-            if self.scheduling_strategy == SchedulingStrategy.EPOCH:
+            if self.scheduling_strategy == IntervalStrategy.EPOCH:
                 self.scheduling_step(loop="training")
 
-            self.state = TrainerStates.EPOCH_END
+            self.state = TrainerState.EPOCH_END
 
-        self.state = TrainerStates.TRAINING_END
+        self.state = TrainerState.TRAINING_END
 
         return self.history
 
@@ -301,7 +309,7 @@ class Trainer(ABC):
         self.model.train()
         with torch.autocast(device_type=self.device.type, dtype=self.precision_dtype, enabled=self.amp):
             loss, outputs = self.compute_loss(batch=batch, return_outputs=True)
-            metrics = self.compute_metrics(batch=batch, predictions=outputs)
+            metrics = self.compute_metrics(batch=batch, outputs=outputs)
 
             if self.gradient_accumulation_steps > 1:
                 loss /= self.gradient_accumulation_steps
@@ -330,17 +338,17 @@ class Trainer(ABC):
         steps = len(self.validation_loader)
         self.history["steps_validation"] = steps
         
-        self.state = TrainerStates.VALIDATION_START
+        self.state = TrainerState.VALIDATION_START
 
         for step, batch in enumerate(self.validation_loader, 1):
             with torch.no_grad():
                 with torch.autocast(device_type=self.device.type, dtype=self.precision_dtype, enabled=self.amp):
                     batch_size = len(batch)
 
-                    self.state = TrainerStates.VALIDATION_STEP_START
+                    self.state = TrainerState.VALIDATION_STEP_START
 
                     batch_loss, batch_outputs = self.compute_loss(batch=batch, return_outputs=True)
-                    batch_metrics = self.compute_metrics(batch=batch, predictions=batch_outputs)
+                    batch_metrics = self.compute_metrics(batch=batch, outputs=batch_outputs)
 
                     loss.update(batch_loss.item(), n=batch_size)
                     metrics.update(batch_metrics, n=batch_size)
@@ -362,7 +370,7 @@ class Trainer(ABC):
                     self.__update_history_data(data=metrics.average, key_format="validation_{key}")
                     self.__update_history_data(data=batch_metrics, key_format="validation_{key}_batch")
 
-                    self.state = TrainerStates.VALIDATION_STEP_END
+                    self.state = TrainerState.VALIDATION_STEP_END
 
                     if self.return_validation_outputs:
                         outputs.extend(batch_outputs.to("cpu"))
@@ -373,19 +381,14 @@ class Trainer(ABC):
             outputs = None
 
         self.on_validation_end(outputs=outputs)
-        self.state = TrainerStates.VALIDATION_END
+        self.state = TrainerState.VALIDATION_END
 
         return (loss.average, metrics.average, outputs)
 
-    @abstractmethod
     def compute_loss(self, 
                       batch:Any, 
                       return_outputs:bool=True) -> torch.Tensor:
         pass
-    
-    def compute_metrics(self, batch:Any, predictions:Any) -> dict:
-        return {}
-
 
     def on_validation_end(self, outputs) -> None:
         """

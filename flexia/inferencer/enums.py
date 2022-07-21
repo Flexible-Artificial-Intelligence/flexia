@@ -16,7 +16,7 @@
 from enum import Enum
 
 
-class InferencerStates(Enum):
+class InferencerState(Enum):
     INIT_START = "on_init_start"
     INIT_END = "on_init_end"
     TRAINING_START = "on_training_start"

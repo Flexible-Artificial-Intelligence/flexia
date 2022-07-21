@@ -26,7 +26,7 @@ import logging
 from ..third_party.addict import Dict
 from ..timer import Timer
 from .utils import exception_handler
-from .enums import InferencerStates
+from .enums import InferencerState
 from ..utils import initialize_device, precision_dtypes
 from ..enums import Precision
 
@@ -53,14 +53,14 @@ class Inferencer(ABC):
         self.device = initialize_device(self.device)
         self.device_type = self.device.type
 
-        self._state = InferencerStates.INIT_START
+        self._state = InferencerState.INIT_START
         self.state = self._state
 
         self.precision_dtype = precision_dtypes[self.precision.value]
         self.loader = None
         self.history = Dict()
 
-        self.state = InferencerStates.INIT_END
+        self.state = InferencerState.INIT_END
 
     def __runner(self, instances=None, *args, **kwargs) -> None:
         def run(instance):
@@ -81,7 +81,7 @@ class Inferencer(ABC):
 
     @state.setter
     def state(self, value):
-        if self.state != InferencerStates.EXCEPTION:
+        if self.state != InferencerState.EXCEPTION:
             self._state = value
 
         self.__runner(instances=self.loggers)
@@ -99,7 +99,7 @@ class Inferencer(ABC):
         timer = Timer()
         outputs = []
 
-        self.state = InferencerStates.PREDICTION_START
+        self.state = InferencerState.PREDICTION_START
         
         self.model.to(self.device)
         self.model.eval()   
@@ -108,7 +108,7 @@ class Inferencer(ABC):
             
             with torch.no_grad():
                 with torch.autocast(device_type=self.device.type, dtype=self.precision_dtype, enabled=self.amp):
-                    self.state = InferencerStates.PREDICTION_STEP_START
+                    self.state = InferencerState.PREDICTION_STEP_START
 
                     batch_outputs = self.prediction_step(batch=batch)
 
@@ -118,12 +118,12 @@ class Inferencer(ABC):
                         "remain": remain,
                     })
                     
-                    self.state = InferencerStates.PREDICTION_STEP_END
+                    self.state = InferencerState.PREDICTION_STEP_END
 
                     batch_outputs = batch_outputs.to("cpu")
                     outputs.extend(batch_outputs)
                     
-        self.state = InferencerStates.PREDICTION_END
+        self.state = InferencerState.PREDICTION_END
 
         outputs = torch.cat(outputs, dim=0)
     

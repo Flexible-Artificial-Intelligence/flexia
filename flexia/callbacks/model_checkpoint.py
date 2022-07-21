@@ -24,7 +24,8 @@ from .callback import Callback
 from ..utils import save_checkpoint
 from ..trainer.enums import TrainerStates
 from .utils import get_delta_value, compare, remove_files_from_directory
-from .enums import Modes, IntervalStrategies
+from ..enums import IntervalStrategy
+from .enums import Modes
 
 
 logger = logging.getLogger(__name__)
@@ -46,7 +47,7 @@ class ModelCheckpoint(Callback):
                               "scheduler": "scheduler_state"}, 
                 save_checkpoint_on_exception=True, 
                 save_interval=None, 
-                save_interval_strategy="epoch", 
+                save_interval_strategy="off", 
                 save_interval_directory=None, 
                 save_interval_filename_format=None):
         
@@ -62,7 +63,7 @@ class ModelCheckpoint(Callback):
         self.custom_keys = custom_keys
         self.save_checkpoint_on_exception = save_checkpoint_on_exception
         self.save_interval = save_interval
-        self.save_interval_strategy = IntervalStrategies(save_interval_strategy)
+        self.save_interval_strategy = IntervalStrategy(save_interval_strategy)
         self.save_interval_directory = save_interval_directory
         self.save_interval_filename_format = save_interval_filename_format
         
@@ -85,7 +86,7 @@ class ModelCheckpoint(Callback):
                 raise NotADirectoryError(f"'{self.directory}' is not directory.")
 
         if self.save_interval_filename_format is None:
-            if self.save_interval_strategy == IntervalStrategies.EPOCH:
+            if self.save_interval_strategy == IntervalStrategy.EPOCH:
                 self.save_interval_filename_format = "checkpoint_{epoch}.pth"
             else:
                 self.save_interval_filename_format = "checkpoint_{step}.pth"
@@ -162,7 +163,7 @@ class ModelCheckpoint(Callback):
             trainer.state = TrainerStates.CHECKPOINT_SAVE
 
     def on_training_step_end(self, trainer) -> None:
-        if self.save_interval_strategy == IntervalStrategies.STEP and self.save_interval is not None:
+        if self.save_interval_strategy == IntervalStrategy.STEP and self.save_interval is not None:
             step = trainer.history["step"]
 
             if step % self.save_interval == 0:
@@ -170,7 +171,7 @@ class ModelCheckpoint(Callback):
 
     
     def on_epoch_end(self, trainer) -> None:
-        if self.save_interval_strategy == IntervalStrategies.EPOCH and self.save_interval is not None:
+        if self.save_interval_strategy == IntervalStrategy.EPOCH and self.save_interval is not None:
             epoch = trainer.history["epoch"]
 
             if epoch % self.save_interval == 0:

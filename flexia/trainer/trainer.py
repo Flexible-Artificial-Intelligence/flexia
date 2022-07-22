@@ -20,7 +20,6 @@ from torch.optim import lr_scheduler
 from typing import Optional, Union, Any, Tuple, List
 from torch.utils.data import DataLoader
 from abc import ABC, abstractmethod
-import numpy as np
 import logging
 
 from .enums import TrainerState
@@ -32,6 +31,7 @@ from ..callbacks import Callback
 from ..utils import get_lr, initialize_device, precision_dtypes
 from ..third_party.addict import Dict
 from ..enums import Precision, IntervalStrategy
+from ..hook.utils import run_hooks
 
 
 logger = logging.getLogger(__name__)
@@ -109,20 +109,6 @@ class Trainer(ABC):
         
         self.state = TrainerState.INIT_END
 
-    def __runner(self, instances:Optional[List[Union["Callback", "Logger"]]]=None, *args, **kwargs) -> None:
-        def run(instance):
-            method = getattr(instance, self.state.value)
-            method(self, *args, **kwargs)
-
-        if instances is not None:
-            if isinstance(instances, list):
-                for instance in instances:
-                    run(instance)
-            else:
-                run(instances)
-
-    def context_manager(self):
-        pass
 
     @property
     def state(self):
@@ -133,8 +119,8 @@ class Trainer(ABC):
         if self.state != TrainerState.TRAINING_STOP:
             self._state = value
 
-        self.__runner(instances=self.loggers)
-        self.__runner(instances=self.callbacks)
+        run_hooks(hooks=self.loggers, trainer=self)
+        run_hooks(hooks=self.callbacks, trainer=self)
     
     @exception_handler
     def train(self, 

@@ -27,6 +27,7 @@ from .utils import exception_handler
 from .enums import InferencerState
 from ..utils import initialize_device, precision_dtypes
 from ..enums import Precision
+from ..hook.utils import run_hooks
 
 
 logger = logging.getLogger(__name__)
@@ -61,19 +62,6 @@ class Inferencer(ABC):
 
         self.state = InferencerState.INIT_END
 
-    def __runner(self, instances=None, *args, **kwargs) -> None:
-        def run(instance):
-            method = getattr(instance, self.state.value)
-            method(self, *args, **kwargs)
-
-        if instances is not None:
-            if isinstance(instances, list):
-                for instance in instances:
-                    run(instance)
-            else:
-                run(instances)
-
-
     @property
     def state(self):
         return self._state
@@ -83,8 +71,8 @@ class Inferencer(ABC):
         if self.state != InferencerState.EXCEPTION:
             self._state = value
 
-        self.__runner(instances=self.loggers)
-        self.__runner(instances=self.callbacks)
+        run_hooks(hooks=self.loggers, trainer=self)
+        run_hooks(hooks=self.callbacks, trainer=self)
 
     @abstractmethod
     def prediction_step(self, batch:Any):

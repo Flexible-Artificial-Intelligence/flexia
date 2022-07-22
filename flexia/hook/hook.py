@@ -154,7 +154,7 @@ class Hook:
 
         pass
 
-    def on_prediction_step_end(self, inferencer) -> None:
+    def on_prediction_step_end(self, ) -> None:
         """
         Called when the prediction step ends.
         """

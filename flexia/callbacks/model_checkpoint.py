@@ -162,20 +162,21 @@ class ModelCheckpoint(Callback):
         if is_saved:
             trainer.state = TrainerState.CHECKPOINT_SAVE
 
-    def on_training_step_end(self, trainer) -> None:
-        if self.save_interval_strategy == IntervalStrategy.STEP and self.save_interval is not None:
-            step = trainer.history["step"]
 
-            if step % self.save_interval == 0:
+    def __check_interval(self, trainer, interval_strategy=IntervalStrategy.OFF):
+        if self.save_interval_strategy == interval_strategy and self.save_interval is not None:
+            interval = trainer.history[self.interval_strategy.value]
+
+            if interval % self.save_interval == 0:
                 self.save_interval_checkpoint(trainer=trainer)
+
+
+    def on_training_step_end(self, trainer) -> None:
+        self.__check_interval(trainer=trainer, interval_strategy=IntervalStrategy.STEP)
 
     
     def on_epoch_end(self, trainer) -> None:
-        if self.save_interval_strategy == IntervalStrategy.EPOCH and self.save_interval is not None:
-            epoch = trainer.history["epoch"]
-
-            if epoch % self.save_interval == 0:
-                self.save_interval_checkpoint(trainer=trainer)
+        self.__check_interval(trainer=trainer, interval_strategy=IntervalStrategy.EPOCH)
 
 
     def save_interval_checkpoint(self, trainer):

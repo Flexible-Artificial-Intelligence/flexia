@@ -21,6 +21,7 @@ from typing import Optional, Union, Any, Tuple, List
 from torch.utils.data import DataLoader
 from abc import ABC, abstractmethod
 import logging
+import os
 
 from .enums import TrainerState
 from .utils import exception_handler
@@ -96,10 +97,13 @@ class Trainer(ABC):
         self.device = initialize_device(self.device)
         self.device_type = DeviceType(self.device.type)
 
-        if self.gradient_scaling and self.scaler is None:
+        if self.gradient_scaling and self.scaler is None and self.amp:
             self.scaler = GradScaler()
         else:
             self.scaler = None
+
+        if self.device_type == DeviceType.TPU:
+            os.environ["XLA_USE_BF16"] = int(self.amp)
 
         self.history = Dict({
             "step": 0,

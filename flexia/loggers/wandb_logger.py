@@ -14,6 +14,7 @@
 
 
 import logging
+import os
 
 from .logger import Logger
 from ..import_utils import is_wandb_available
@@ -29,14 +30,17 @@ logger = logging.getLogger(__name__)
 
 
 class WANDBLogger(Logger):
-    def __init__(self, api_key=None, finish=True, **kwargs):
+    def __init__(self, api_key=None, finish=True, silent=False, **kwargs):
         self.api_key = api_key
         self.finish = finish
+        self.silent = silent
         self.kwargs = kwargs
 
     def on_training_start(self, trainer):
         if self.api_key is not None:
             wandb.login(key=self.api_key)
+
+        os.environ["WANDB_SILENT"] = int(self.silent)
 
         wandb.init(**self.kwargs)
         print(f"Weights & Biases Run URL: {wandb.run.get_url()}")

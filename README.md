@@ -74,11 +74,11 @@ Flexia has communication channels in some popular social networks. There you can
 
 - Loggers
     - [ ] DataFrameLogger
-    - [ ] Environment variables in `WANDBLogger`
+    - [x] Environment variables in `WANDBLogger`
     - [ ] List wrapper
 
 - [ ] Distributed Training
-- [ ] Torch XLA
+- [x] Torch XLA
 - [ ] DeepSpeed integration
 - [ ] PyPi package
 - [ ] ONNX

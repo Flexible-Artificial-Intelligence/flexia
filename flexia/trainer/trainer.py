@@ -30,8 +30,13 @@ from ..loggers import Logger
 from ..callbacks import Callback
 from ..utils import get_lr, initialize_device, precision_dtypes
 from ..third_party.addict import Dict
-from ..enums import Precision, IntervalStrategy
+from ..enums import Precision, IntervalStrategy, DeviceType
 from ..hook.utils import run_hooks
+from ..import_utils import is_torch_xla_available
+
+
+if is_torch_xla_available():
+    import torch_xla.core.xla_model as xm
 
 
 logger = logging.getLogger(__name__)
@@ -89,11 +94,10 @@ class Trainer(ABC):
 
         self.precision_dtype = precision_dtypes[self.precision.value]
         self.device = initialize_device(self.device)
-        self.device_type = self.device.type
+        self.device_type = DeviceType(self.device.type)
 
-        if self.device_type == "cuda":
-            if self.gradient_scaling and self.scaler is None:
-                self.scaler = GradScaler()
+        if self.gradient_scaling and self.scaler is None:
+            self.scaler = GradScaler()
         else:
             self.scaler = None
 
@@ -269,6 +273,8 @@ class Trainer(ABC):
         if self.scaler is not None:
             self.scaler.step(self.optimizer)
             self.scaler.update()
+        elif self.device_type == DeviceType.TPU:
+            xm.optimizer_step(self.optimizer, barrier=True)
         else:
             self.optimizer.step()
 
@@ -301,6 +307,9 @@ class Trainer(ABC):
                 
     def clip_gradients(self) -> None:
         if self.gradient_norm is not None:
+            if self.device_type == xm.TPU:
+                xm.reduce_gradients(self.optimizer)
+
             if self.scaler is not None:
                 self.scaler.unscale_(self.optimizer)
             

@@ -24,12 +24,16 @@ import random
 import os
 import logging
 
-from .import_utils import is_transformers_available, is_bitsandbytes_available
+from flexia.torch_utils import is_cuda_available
+
+from .import_utils import is_transformers_available, is_bitsandbytes_available, is_torch_xla_available
 from .exceptions import LibraryException
 from .enums import SchedulerLibrary, OptimizerLibrary
+from .torch_utils import is_cuda_available, is_tpu_available
 
 
-logger = logging.getLogger(__name__)
+if is_torch_xla_available():
+    import torch_xla.core.xla_model as xm
 
 if is_transformers_available():
     import transformers
@@ -46,13 +50,16 @@ precision_dtypes = {
 }
 
 
-def initialize_device(device:Optional[Union[str, torch.device]]=None):
+def initialize_device(device=None):
     if device is None:
-        device_name = "cuda" if torch.cuda.is_available() else "cpu"
-        device = torch.device(device_name)
-    else:
-        if not isinstance(device, torch.device):
-            device = torch.device(device)
+        if is_cuda_available():
+            device = torch.device("cuda:0")
+        elif is_tpu_available():
+            device = xm.xla_device(n=1)
+        else:
+            device = torch.device("cpu")
+
+    device = torch.device(device)
 
     return device
     

@@ -44,3 +44,14 @@ class IntervalStrategy(ExplicitEnum):
     EPOCH = "epoch"
     STEP = "step"
     OFF = "off"
+
+
+class DeviceType(Enum):
+    CPU = "cpu"
+    CUDA = "cuda"
+    TPU = "xla"
+
+    @classmethod
+    def _missing_(cls, value):
+        keys = list(cls._value2member_map_.keys())
+        raise ValueError(f"Device type `{value}` is not supported yet. Please, change to one of `{keys}`.")

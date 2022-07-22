@@ -17,6 +17,11 @@ import torch
 import numpy as np
 from typing import Any
 import logging
+from .import_utils import is_torch_xla_available
+
+
+if is_torch_xla_available():
+    import torch_xla.core.xla_model as xm
 
 
 logger = logging.getLogger(__name__)
@@ -74,3 +79,15 @@ def to_tensors(*inputs:Any) -> tuple:
     Converts all inputs to torch.Tensor.
     """
     return tuple(map(lambda input: to_tensor(input), inputs))
+
+
+def is_cuda_available():
+    return torch.cuda.is_available()
+
+
+def is_tpu_available():
+    if is_torch_xla_available():
+        devices = xm.get_xla_supported_devices()
+        return len(devices) > 0
+    else:
+        return False

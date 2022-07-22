@@ -45,7 +45,7 @@ def is_bitsandbytes_available() -> bool:
     try:
         import bitsandbytes
         return True
-    except:
+    except ModuleNotFoundError:
         return False
 
 
@@ -57,5 +57,17 @@ def is_pandas_available() -> bool:
     try:
         import pandas
         return True
-    except:
+    except ModuleNotFoundError:
+        return False
+
+
+def is_torch_xla_available() -> bool:
+    """
+    Checks the availablity of `torch_xla` library.    
+    """
+
+    try:
+        import torch_xla
+        return True
+    except ModuleNotFoundError:
         return False

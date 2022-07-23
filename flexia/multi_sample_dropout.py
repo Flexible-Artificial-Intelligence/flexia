@@ -16,10 +16,7 @@
 import torch
 from torch import nn
 from typing import Any, Optional, Union, List, Callable, Tuple
-import logging
 
-
-logger = logging.getLogger(__name__)
 
 class MultiSampleDropout(nn.Module):
     def __init__(self, 

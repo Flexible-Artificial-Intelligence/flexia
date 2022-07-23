@@ -23,30 +23,35 @@ class ExplicitEnum(Enum):
         raise ValueError(f"`{value}` is not a valid `{cls.__name__}`, select one of `{keys}`.")
 
 
-class SchedulerLibrary(ExplicitEnum):
+class EqualEnum(Enum):
+    def __eq__(self, other) -> bool:
+        return self.value == other.value
+
+
+class SchedulerLibrary(ExplicitEnum, EqualEnum):
     TRANSFORMERS = "transformers"
     TORCH = "torch"
 
 
-class OptimizerLibrary(ExplicitEnum):
+class OptimizerLibrary(ExplicitEnum, EqualEnum):
     TRANSFORMERS = "transformers"
     TORCH = "torch"
     BITSANDBYTES = "bitsandbytes"
 
 
-class Precision(ExplicitEnum):
+class Precision(ExplicitEnum, EqualEnum):
     FP32 = "fp32"
     FP16 = "fp16"
     BF16 = "bf16"
 
 
-class IntervalStrategy(ExplicitEnum):
+class IntervalStrategy(ExplicitEnum, EqualEnum):
     EPOCH = "epoch"
     STEP = "step"
     OFF = "off"
 
 
-class DeviceType(Enum):
+class DeviceType(ExplicitEnum, EqualEnum):
     CPU = "cpu"
     CUDA = "cuda"
     TPU = "xla"

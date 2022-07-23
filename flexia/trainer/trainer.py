@@ -20,11 +20,9 @@ from torch.optim import lr_scheduler
 from typing import Optional, Union, Any, Tuple, List
 from torch.utils.data import DataLoader
 from abc import ABC, abstractmethod
-import logging
 import os
 
 from .enums import TrainerState
-from .utils import exception_handler
 from ..timer import Timer
 from ..averager import Averager
 from ..loggers import Logger
@@ -32,7 +30,7 @@ from ..callbacks import Callback
 from ..utils import get_lr, initialize_device, precision_dtypes
 from ..third_party.addict import Dict
 from ..enums import Precision, IntervalStrategy, DeviceType
-from ..hook.utils import run_hooks
+from ..hook.utils import run_hooks, exception_handler
 from ..import_utils import is_torch_xla_available
 
 
@@ -40,7 +38,6 @@ if is_torch_xla_available():
     import torch_xla.core.xla_model as xm
 
 
-logger = logging.getLogger(__name__)
 
 
 class Trainer(ABC):

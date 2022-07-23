@@ -15,14 +15,8 @@
 
 from typing import Union, Optional
 from copy import deepcopy
-import logging
 
 from .third_party.addict import Dict
-
-
-logger = logging.getLogger(__name__)
-
-
 
 
 class Averager:
@@ -47,25 +41,7 @@ class Averager:
         self.value = value
         self.__calls = 0
         
-    def state_dict(self) -> dict:
-        state = {
-            "average": self.average,
-            "sum": self.sum,
-            "count": self.count,
-            "value": self.value,
-        }
         
-        return state
-    
-    def load_state_dict(self, state_dict:dict) -> "Averager":
-        self.average = state_dict["average"]
-        self.sum = state_dict["sum"]
-        self.count = state_dict["count"]
-        self.value = state_dict["value"]
-        
-        return self
-        
-    
     def reset(self) -> None:
         """
         Resets all stored values.

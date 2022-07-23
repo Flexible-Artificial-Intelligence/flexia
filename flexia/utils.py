@@ -22,14 +22,11 @@ import numpy as np
 from typing import Any, Union, Optional
 import random
 import os
-import logging
 
-from flexia.torch_utils import is_cuda_available
 
 from .import_utils import is_transformers_available, is_bitsandbytes_available, is_torch_xla_available
 from .exceptions import LibraryException
 from .enums import SchedulerLibrary, OptimizerLibrary
-from .torch_utils import is_cuda_available, is_tpu_available
 
 
 if is_torch_xla_available():
@@ -84,7 +81,6 @@ def seed_everything(seed:Optional[int]=None) -> int:
     torch.cuda.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = True
-    os.environ['PC_SEED'] = str(seed)
     
     return seed
     
@@ -112,8 +108,7 @@ def load_checkpoint(path:str,
                     model:nn.Module, 
                     optimizer:Optional[Optimizer]=None, 
                     scheduler:Optional[_LRScheduler]=None, 
-                    strict:bool=True, 
-                    ignore_warnings:bool=False, 
+                    strict:bool=True,  
                     custom_keys:Optional["dict[str, str]"]=dict(model="model_state", 
                                                                 optimizer="optimizer_state",
                                                                 scheduler="scheduler_state")) -> dict:
@@ -232,19 +227,18 @@ def get_scheduler(optimizer:Optimizer, name:str="LinearLR", parameters:dict={}, 
     library = SchedulerLibrary(library)
 
     if library == SchedulerLibrary.TORCH:
-        scheduler = __get_from_library(library=lr_scheduler, 
-                                       name=name, 
-                                       parameters=parameters, 
-                                       optimizer=optimizer)
+        module = lr_scheduler
 
     elif library == SchedulerLibrary.TRANSFORMERS:
         if is_transformers_available():
-            scheduler = __get_from_library(library=transformers, 
-                                           name=name, 
-                                           parameters=parameters, 
-                                           optimizer=optimizer)
+            module = transformers
         else:
             raise LibraryException("transformers")
+
+    scheduler = __get_from_library(library=module, 
+                                   name=name, 
+                                   parameters=parameters, 
+                                   optimizer=optimizer)
 
     return scheduler
 
@@ -268,40 +262,39 @@ def get_optimizer(model_parameters:Any, name:str="AdamW", parameters:dict={}, li
     library = OptimizerLibrary(library)
 
     if library == OptimizerLibrary.TORCH:
-        optimizer = __get_from_library(library=optim, 
-                                       name=name, 
-                                       parameters=parameters, 
-                                       params=model_parameters)
+        module = optim
 
     elif library == OptimizerLibrary.TRANSFORMERS:
         if is_transformers_available():
-            optimizer = __get_from_library(library=transformers, 
-                                           name=name, 
-                                           parameters=parameters, 
-                                           params=model_parameters)
+            module = transformers
         else:
             raise LibraryException("transformers")
 
     elif library == OptimizerLibrary.BITSANDBYTES:
         if is_bitsandbytes_available():
-            optimizer = __get_from_library(library=bnb.optim, 
-                                           name=name, 
-                                           parameters=parameters, 
-                                           params=model_parameters)
+            module = bnb.optim
         else:
             raise LibraryException("bitsandbytes")
+
+    optimizer = __get_from_library(library=module, 
+                                   name=name, 
+                                   parameters=parameters, 
+                                   params=model_parameters)
 
     return optimizer
 
 
 
-def freeze_module(module:nn.Module) -> None:
+def freeze_module(module:nn.Module, verbose=False) -> None:
     """
     Freezes module's parameters.
     """
     
-    for parameter in module.parameters():
+    for name, parameter in module.named_parameters():
         parameter.requires_grad = False
+
+        if verbose:
+            print(f"Parameter `{name}` was freezed.")
         
         
 def get_freezed_module_parameters(module:nn.Module) -> list:
@@ -315,3 +308,15 @@ def get_freezed_module_parameters(module:nn.Module) -> list:
             freezed_parameters.append(name)
             
     return freezed_parameters
+
+
+def is_cuda_available():
+    return torch.cuda.is_available()
+
+
+def is_tpu_available():
+    if is_torch_xla_available():
+        devices = xm.get_xla_supported_devices()
+        return len(devices) > 0
+    else:
+        return False

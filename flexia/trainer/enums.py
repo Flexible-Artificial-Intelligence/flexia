@@ -13,10 +13,10 @@
 # limitations under the License.
 
 
-from enum import Enum
+from ..enums import EqualEnum
 
 
-class TrainerState(Enum):
+class TrainerState(EqualEnum):
     INIT_START = "on_init_start"
     INIT_END = "on_init_end"
     TRAINING_START = "on_training_start"

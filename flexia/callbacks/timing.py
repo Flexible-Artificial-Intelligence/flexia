@@ -15,13 +15,10 @@
 
 from typing import Union
 from datetime import timedelta
-import logging
 
 from .callback import Callback
 from ..trainer.enums import TrainerState
 
-
-logger = logging.getLogger(__name__)
 
 class Timing(Callback):
     def __init__(self, 

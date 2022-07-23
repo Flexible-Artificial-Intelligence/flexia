@@ -13,13 +13,10 @@
 # limitations under the License.
 
 
-import logging
 import json
 
 from .third_party.addict import Dict
 
-
-logger = logging.getLogger(__name__)
 
 class Config(Dict):    
     def to_json_string(self) -> str:

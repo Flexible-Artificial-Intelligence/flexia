@@ -1,2 +1,2 @@
 from .hook import Hook
-from .enums import States
+from .lambda_hook import LambdaHook

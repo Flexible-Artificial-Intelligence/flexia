@@ -12,14 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import logging
 
 from .logger import Logger
 from .utils import format_time, get_logger, format_metrics
-
-
-logger = logging.getLogger(__name__)
 
 
 class LoggingLogger(Logger):

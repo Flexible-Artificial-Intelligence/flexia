@@ -18,19 +18,13 @@ import torch
 from torch import nn
 from typing import  Union, Any
 from torch.utils.data import DataLoader
-import logging
-
 
 from ..third_party.addict import Dict
 from ..timer import Timer
-from .utils import exception_handler
 from .enums import InferencerState
 from ..utils import initialize_device, precision_dtypes
 from ..enums import Precision
-from ..hook.utils import run_hooks
-
-
-logger = logging.getLogger(__name__)
+from ..hook.utils import run_hooks, exception_handler
 
 
 class Inferencer(ABC):

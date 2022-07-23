@@ -15,15 +15,11 @@
 
 from typing import  Union, Optional
 import numpy as np
-import logging
 
 from ..trainer.enums import TrainerState
 from .callback import Callback
 from .utils import compare, get_delta_value
 from .enums import Modes
-
-
-logger = logging.getLogger(__name__)
 
 
 class EarlyStopping(Callback):   

@@ -13,9 +13,9 @@
 # limitations under the License.
 
 
-from ..enums import ExplicitEnum
+from ..enums import ExplicitEnum, EqualEnum
 
 
-class Modes(ExplicitEnum):
+class Modes(ExplicitEnum, EqualEnum):
     MIN = "min"
     MAX = "max"

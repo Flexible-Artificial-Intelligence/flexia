@@ -13,13 +13,8 @@
 # limitations under the License.
 
 
-import logging
-
 from .logger import Logger
 from .utils import format_metrics, format_time
-
-
-logger = logging.getLogger(__name__)
 
 
 class PrintLogger(Logger):

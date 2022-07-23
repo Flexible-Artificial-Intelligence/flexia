@@ -17,8 +17,6 @@ import os
 import gc
 import numpy as np
 from typing import Union
-import logging
-
 
 from .callback import Callback
 from ..utils import save_checkpoint
@@ -26,9 +24,6 @@ from ..trainer.enums import TrainerState
 from .utils import get_delta_value, compare, remove_files_from_directory
 from ..enums import IntervalStrategy
 from .enums import Modes
-
-
-logger = logging.getLogger(__name__)
 
 
 class ModelCheckpoint(Callback):  

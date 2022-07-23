@@ -1,2 +1,0 @@
-class DeepSpeedConfig:
-    pass

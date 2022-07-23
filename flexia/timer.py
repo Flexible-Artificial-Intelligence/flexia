@@ -15,10 +15,6 @@
 
 from datetime import timedelta, datetime
 from typing import Tuple
-import logging
-
-
-logger = logging.getLogger(__name__)
 
 
 class Timer:
@@ -27,24 +23,7 @@ class Timer:
         
         self.elapsed_time = timedelta(seconds=0)
         self.remain_time = timedelta(seconds=0)
-    
 
-    def state_dict(self) -> dict:
-        state = {
-            "start": str(self.start),
-            "elapsed_time": self.elapsed_time.total_seconds(),
-            "remain_time": None if self.remain_time is None else self.remain_time.total_seconds(),
-        }
-        
-        return state
-    
-    def load_state_dict(self, state_dict:dict) -> "Timer":
-        self.start = datetime.fromisoformat(state_dict["start"])
-        self.elapsed_time = timedelta(seconds=state_dict["elapsed_time"])
-        self.remain_time = timedelta(seconds=state_dict["remain_time"])
-        
-        return self
-    
     
     def __call__(self, fraction:float) -> Tuple[str, str]:                
         self.elapsed_time = datetime.now() - self.start

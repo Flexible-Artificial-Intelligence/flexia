@@ -99,9 +99,6 @@ class Trainer(ABC):
         else:
             self.scaler = None
 
-        if self.device_type == DeviceType.TPU:
-            os.environ["XLA_USE_BF16"] = int(self.amp)
-
         self.history = Dict({
             "step": 0,
             "epoch": 0,

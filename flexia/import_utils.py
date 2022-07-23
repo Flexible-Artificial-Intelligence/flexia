@@ -45,7 +45,7 @@ def is_bitsandbytes_available() -> bool:
     try:
         import bitsandbytes
         return True
-    except ModuleNotFoundError:
+    except:
         return False
 
 

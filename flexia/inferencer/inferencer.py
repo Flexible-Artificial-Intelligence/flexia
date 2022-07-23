@@ -18,12 +18,13 @@ import torch
 from torch import nn
 from typing import  Union, Any
 from torch.utils.data import DataLoader
+import contextlib
 
 from ..third_party.addict import Dict
 from ..timer import Timer
 from .enums import InferencerState
 from ..utils import initialize_device, precision_dtypes
-from ..enums import Precision
+from ..enums import Precision, DeviceType
 from ..hook.utils import run_hooks, exception_handler
 
 
@@ -44,7 +45,7 @@ class Inferencer(ABC):
         self.loggers = loggers
         self.callbacks = callbacks
         self.device = initialize_device(self.device)
-        self.device_type = self.device.type
+        self.device_type = DeviceType(self.device.type)
 
         self._state = InferencerState.INIT_START
         self.state = self._state
@@ -72,6 +73,16 @@ class Inferencer(ABC):
     def prediction_step(self, batch:Any):
         pass
 
+    def context_manager(self):
+        if self.device_type != DeviceType.TPU:
+            manager = torch.autocast(device_type=self.device.type, 
+                                     dtype=self.precision_dtype, 
+                                     enabled=self.amp)
+        else:
+            manager = contextlib.nullcontext()
+
+        return manager
+
     @exception_handler
     def predict(self, loader:DataLoader):
         self.loader = loader      
@@ -88,7 +99,7 @@ class Inferencer(ABC):
             self.history["step"] = step
             
             with torch.no_grad():
-                with torch.autocast(device_type=self.device.type, dtype=self.precision_dtype, enabled=self.amp):
+                with self.context_manager():
                     self.state = InferencerState.PREDICTION_STEP_START
 
                     batch_outputs = self.prediction_step(batch=batch)

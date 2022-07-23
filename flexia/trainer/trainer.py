@@ -20,6 +20,7 @@ from torch.optim import lr_scheduler
 from typing import Optional, Union, Any, Tuple, List
 from torch.utils.data import DataLoader
 from abc import ABC, abstractmethod
+import contextlib
 import os
 
 from .enums import TrainerState
@@ -111,6 +112,16 @@ class Trainer(ABC):
         
         self.state = TrainerState.INIT_END
 
+
+    def context_manager(self):
+        if self.device_type != DeviceType.TPU:
+            manager = torch.autocast(device_type=self.device.type, 
+                                     dtype=self.precision_dtype, 
+                                     enabled=self.amp)
+        else:
+            manager = contextlib.nullcontext()
+
+        return manager
 
     @property
     def state(self):
@@ -290,7 +301,7 @@ class Trainer(ABC):
                     
     def training_step(self, batch:Any) -> Tuple[torch.Tensor, dict]:
         self.model.train()
-        with torch.autocast(device_type=self.device.type, dtype=self.precision_dtype, enabled=self.amp):
+        with self.context_manager():
             loss, outputs = self.compute_loss(batch=batch, return_outputs=True)
             outputs = outputs.detach()
             metrics = self.compute_metrics(batch=batch, outputs=outputs)
@@ -329,7 +340,7 @@ class Trainer(ABC):
 
         for step, batch in enumerate(self.validation_loader, 1):
             with torch.no_grad():
-                with torch.autocast(device_type=self.device.type, dtype=self.precision_dtype, enabled=self.amp):
+                with self.context_manager():
                     batch_size = len(batch)
 
                     self.state = TrainerState.VALIDATION_STEP_START

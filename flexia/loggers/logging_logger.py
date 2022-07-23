@@ -25,7 +25,6 @@ class LoggingLogger(Logger):
                  logs_format:str="%(message)s", 
                  verbose:int=1, 
                  decimals=4, 
-                 epoch_decimals=0,
                  sep=" - ",
                  level=logging.INFO, 
                  time_format:str="{hours:02d}:{minutes:02d}:{seconds:02d}") -> None:
@@ -37,7 +36,6 @@ class LoggingLogger(Logger):
         self.logs_format = logs_format
         self.verbose = verbose
         self.decimals = decimals
-        self.epoch_decimals = epoch_decimals
         self.level = level
         self.sep = sep
         self.time_format = time_format
@@ -69,7 +67,7 @@ class LoggingLogger(Logger):
 
             metrics_string = format_metrics(metrics=train_metrics_epoch, decimals=self.decimals, sep=self.sep)
 
-            self.logger.info(f"epoch: {epoch:{epochs_margin}.{self.epoch_decimals}f}/{epochs:{epochs_margin}d}{self.sep}"
+            self.logger.info(f"epoch: {epoch:{epochs_margin}d}/{epochs:{epochs_margin}d}{self.sep}"
                              f"step: {step:{steps_margin}d}/{steps:{steps_margin}d}{self.sep}"
                              f"elapsed: {elapsed}{self.sep}"
                              f"remain: {remain}{self.sep}"

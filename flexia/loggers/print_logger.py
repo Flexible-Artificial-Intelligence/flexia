@@ -21,7 +21,6 @@ class PrintLogger(Logger):
     def __init__(self, 
                  verbose:int=1, 
                  decimals:int=3, 
-                 epoch_decimals=0,
                  sep=" - ", 
                  time_format:str="{hours:02d}:{minutes:02d}:{seconds:02d}", 
 ) -> None:
@@ -29,7 +28,6 @@ class PrintLogger(Logger):
 
         self.verbose = verbose
         self.decimals = decimals
-        self.epoch_decimals = epoch_decimals
         self.time_format = time_format
         self.sep = sep
 
@@ -51,7 +49,7 @@ class PrintLogger(Logger):
 
             metrics_string = format_metrics(metrics=train_metrics_epoch, decimals=self.decimals, sep=self.sep)
 
-            print(f"epoch: {epoch:{epochs_margin}.{self.epoch_decimals}f}/{epochs:{epochs_margin}d}{self.sep}"
+            print(f"epoch: {epoch:{epochs_margin}d}/{epochs:{epochs_margin}d}{self.sep}"
                   f"step: {step:{steps_margin}d}/{steps:{steps_margin}d}{self.sep}"
                   f"elapsed: {elapsed}{self.sep}"
                   f"remain: {remain}{self.sep}"

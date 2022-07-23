@@ -367,7 +367,7 @@ class Trainer(ABC):
                         outputs.extend(batch_outputs.to("cpu"))
 
         if self.return_validation_outputs:
-            outputs = torch.cat(outputs, dim=0)
+            outputs = torch.stack(outputs, dim=0)
         else:
             outputs = None
 

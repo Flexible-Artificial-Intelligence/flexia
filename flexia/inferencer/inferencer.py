@@ -106,6 +106,6 @@ class Inferencer(ABC):
                     
         self.state = InferencerState.PREDICTION_END
 
-        outputs = torch.cat(outputs, dim=0)
+        outputs = torch.stack(outputs, dim=0)
     
         return outputs

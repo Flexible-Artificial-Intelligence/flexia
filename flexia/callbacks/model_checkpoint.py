@@ -160,7 +160,7 @@ class ModelCheckpoint(Callback):
 
     def __check_interval(self, trainer, interval_strategy=IntervalStrategy.OFF):
         if self.save_interval_strategy == interval_strategy and self.save_interval is not None:
-            interval = trainer.history[self.interval_strategy.value]
+            interval = trainer.history[interval_strategy.value]
 
             if interval % self.save_interval == 0:
                 self.save_interval_checkpoint(trainer=trainer)

@@ -308,7 +308,7 @@ class Trainer(ABC):
                 
     def clip_gradients(self) -> None:
         if self.gradient_norm is not None:
-            if self.device_type == xm.TPU:
+            if self.device_type == DeviceType.TPU:
                 xm.reduce_gradients(self.optimizer)
 
             if self.scaler is not None:

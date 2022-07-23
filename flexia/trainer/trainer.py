@@ -169,8 +169,7 @@ class Trainer(ABC):
 
             self.model.zero_grad(set_to_none=True)
             for step, batch in enumerate(self.train_loader, 1):
-                step_frac = (step - 1) / steps
-                self.history["epoch"] = epoch + step_frac
+                self.history["epoch"] = epoch
                 self.history["step"] += 1
                 self.history["step_epoch"] = step
                 

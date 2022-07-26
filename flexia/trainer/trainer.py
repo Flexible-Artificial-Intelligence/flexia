@@ -46,7 +46,7 @@ if is_torch_xla_available():
 class Trainer(ABC):
     def __init__(self, 
                  model:nn.Module, 
-                 optimizer:optim.Optimizer,
+                 optimizer:optim.Optimizer=None,
                  scheduler:Optional[lr_scheduler._LRScheduler]=None, 
                  scheduling_strategy:str="step", 
                  gradient_accumulation_steps:int=1, 
@@ -80,6 +80,9 @@ class Trainer(ABC):
         self.loggers = loggers
         self.callbacks = callbacks
 
+        self.loggers = Loggers(self.loggers)
+        self.callbacks = Loggers(self.callbacks)
+
         self._state = TrainerState.INIT_START
         self.state = self._state
         
@@ -95,8 +98,6 @@ class Trainer(ABC):
         assert isinstance(self.gradient_accumulation_steps, int), f"`gradient_accumulation_steps` must be integer type, but given `{type(self.gradient_accumulation_steps)}`"
 
         self.precision_dtype = precision_dtypes[self.precision.value]
-        self.loggers = Loggers(self.loggers)
-        self.callbacks = Loggers(self.callbacks)
 
         if self.gradient_scaling and self.scaler is None and self.amp:
             self.scaler = GradScaler()

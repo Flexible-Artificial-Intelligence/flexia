@@ -67,12 +67,12 @@ class TQDMLogger(Logger):
     def on_validation_end(self, trainer):
         trainer.validation_loader.close()
 
-    def on_prediction_start(self, inferencer):
-        description = "Inference"
-        inferencer.loader = self.__loader_wrapper(loader=inferencer.loader, description=description)
+    def on_prediction_start(self, trainer):
+        description = "Prediction"
+        trainer.prediction_loader = self.__loader_wrapper(loader=trainer.prediction_loader, description=description)
 
-    def on_prediction_end(self, inferencer):
-        inferencer.loader.close()
+    def on_prediction_end(self, trainer):
+        trainer.prediction_loader.close()
 
     def __loader_wrapper(self, loader, description=""): 
         steps = len(loader)

@@ -79,13 +79,13 @@ class PrintLogger(Logger):
                   f"{metrics_string}")
 
 
-    def on_prediction_step_end(self, inferencer):
-        step = inferencer.history["step"]
-        steps = inferencer.history["steps"]
+    def on_prediction_step_end(self, trainer):
+        step = trainer.history["prediction_step"]
+        steps = trainer.history["prediction_steps"]
 
         if step % self.verbose == 0 or step == steps and self.verbose > 0:
-            elapsed = format_time(inferencer.history["elapsed"], time_format=self.time_format)
-            remain = format_time(inferencer.history["remain"], time_format=self.time_format)
+            elapsed = format_time(trainer.history["prediction_elapsed"], time_format=self.time_format)
+            remain = format_time(trainer.history["prediction_remain"], time_format=self.time_format)
 
             steps_margin = len(str(steps))
             print(f"[Prediction] {step:{steps_margin}d}/{steps:{steps_margin}d}{self.sep}"

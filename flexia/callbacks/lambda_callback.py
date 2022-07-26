@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from ..hook import LambdaHook
+from ..hooks import LambdaHook
 
 
 class LambdaCallback(LambdaHook):

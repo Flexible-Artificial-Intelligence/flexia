@@ -15,10 +15,10 @@ class LambdaHook:
                  on_training_stop=lambda trainer: None, 
                  on_checkpoint_save=lambda trainer: None, 
                  on_exception=lambda trainer: None,
-                 on_prediction_start=lambda inferencer: None,
-                 on_prediction_end=lambda inferencer: None,
-                 on_prediction_step_start=lambda inferencer: None,
-                 on_prediction_step_end=lambda inferencer: None):
+                 on_prediction_start=lambda trainer: None,
+                 on_prediction_end=lambda trainer: None,
+                 on_prediction_step_start=lambda trainer: None,
+                 on_prediction_step_end=lambda trainer: None):
 
         self.on_init_start = on_init_start
         self.on_init_end = on_init_end

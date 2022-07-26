@@ -14,7 +14,7 @@
 
 
 import torch
-from torch import nn, optim
+from torch import device, nn, optim
 from torch.optim import Optimizer, lr_scheduler
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import Dataset, DataLoader
@@ -26,7 +26,7 @@ import os
 
 from .import_utils import is_transformers_available, is_bitsandbytes_available, is_torch_xla_available
 from .exceptions import LibraryException
-from .enums import SchedulerLibrary, OptimizerLibrary
+from .enums import SchedulerLibrary, OptimizerLibrary, DeviceType
 
 
 if is_torch_xla_available():
@@ -130,7 +130,7 @@ def load_checkpoint(path:str,
             
         """
 
-        checkpoint = torch.load(path) if torch.cuda.is_available() else torch.load(path, map_location=torch.device("cpu"))
+        checkpoint = torch.load(path, map_location=initialize_device())
         
         model_key = custom_keys.get("model", "model_state")
         model_state = checkpoint[model_key]
@@ -161,8 +161,11 @@ def save_checkpoint(path:str,
                     custom_keys:Optional["dict[str, str]"]=dict(model="model_state", 
                                                                 optimizer="optimizer_state",
                                                                 scheduler="scheduler_state"),
+                    device_type="cpu",
                     **kwargs) -> dict:
         
+    device_type = DeviceType(device_type)
+    
     checkpoint = {}
     model_key = custom_keys.get("model", "model_state")
     checkpoint[model_key] = model.state_dict()
@@ -177,7 +180,8 @@ def save_checkpoint(path:str,
 
     checkpoint.update(kwargs)
 
-    torch.save(checkpoint, path)
+    save_function = torch.save if device_type != DeviceType.TPU else xm.save
+    save_function(checkpoint, path)
 
     return path
 

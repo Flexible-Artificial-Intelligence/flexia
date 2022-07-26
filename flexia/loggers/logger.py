@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ..hook import Hook
+from ..hooks import Hook
 
 
 class Logger(Hook):    

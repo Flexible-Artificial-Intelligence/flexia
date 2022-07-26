@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from ..hook import Hook
+from ..hooks import Hook
 
 
 class Callback(Hook): 

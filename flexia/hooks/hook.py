@@ -133,28 +133,28 @@ class Hook:
 
         self.on_training_end(trainer=trainer)
 
-    def on_prediction_start(self, inferencer) -> None:
+    def on_prediction_start(self, trainer) -> None:
         """
         Called when the prediction loop starts.
         """
 
         pass
 
-    def on_prediction_end(self, inferencer) -> None: 
+    def on_prediction_end(self, trainer) -> None: 
         """
         Called when the prediction loop ends.
         """
 
         pass
 
-    def on_prediction_step_start(self, inferencer) -> None:
+    def on_prediction_step_start(self, trainer) -> None:
         """
         Called when the prediction step starts.
         """
 
         pass
 
-    def on_prediction_step_end(self, ) -> None:
+    def on_prediction_step_end(self, trainer) -> None:
         """
         Called when the prediction step ends.
         """

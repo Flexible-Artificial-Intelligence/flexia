@@ -196,7 +196,9 @@ class ModelCheckpoint(Callback):
                                      custom_keys=self.custom_keys, 
                                      path=checkpoint_path, 
                                      step=trainer.history["step"], 
-                                     epoch=trainer.history["epoch"], 
+                                     epoch=trainer.history["epoch"],
+                                     monitor_value=trainer.history[self.monitor_value], 
+                                     device_type=trainer.device_type,
                                      **kwargs)
 
         return checkpoint_path, checkpoint

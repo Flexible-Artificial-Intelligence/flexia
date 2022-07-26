@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+from sklearn import metrics
 import torch
 from torch import nn, optim
 from torch.cuda.amp import GradScaler
@@ -31,13 +32,14 @@ from ..callbacks import Callback
 from ..utils import get_lr, initialize_device, precision_dtypes
 from ..third_party.addict import Dict
 from ..enums import Precision, IntervalStrategy, DeviceType
-from ..hook.utils import run_hooks, exception_handler
+from ..hooks.utils import run_hook, exception_handler
 from ..import_utils import is_torch_xla_available
+from ..callbacks import Callbacks
+from ..loggers import Loggers
 
 
 if is_torch_xla_available():
     import torch_xla.core.xla_model as xm
-
 
 
 
@@ -69,12 +71,13 @@ class Trainer(ABC):
         self.precision = Precision(precision)
         self.gradient_norm = gradient_norm
         self.amp = amp
-        self.device = device
+        self.device = initialize_device(device)
+        self.device_type = DeviceType(self.device.type)
         self.validation_strategy = IntervalStrategy(validation_strategy)
         self.validation_steps = validation_steps
         self.scaler = scaler
-        self.loggers = loggers
         self.epochs = epochs
+        self.loggers = loggers
         self.callbacks = callbacks
 
         self._state = TrainerState.INIT_START
@@ -92,13 +95,12 @@ class Trainer(ABC):
         assert isinstance(self.gradient_accumulation_steps, int), f"`gradient_accumulation_steps` must be integer type, but given `{type(self.gradient_accumulation_steps)}`"
 
         self.precision_dtype = precision_dtypes[self.precision.value]
-        self.device = initialize_device(self.device)
-        self.device_type = DeviceType(self.device.type)
 
         if self.gradient_scaling and self.scaler is None and self.amp:
             self.scaler = GradScaler()
         else:
             self.scaler = None
+
 
         self.history = Dict({
             "step": 0,
@@ -132,8 +134,8 @@ class Trainer(ABC):
         if self.state != TrainerState.TRAINING_STOP:
             self._state = value
 
-        run_hooks(hooks=self.loggers, trainer=self)
-        run_hooks(hooks=self.callbacks, trainer=self)
+        run_hook(hook=self.loggers, trainer=self)
+        run_hook(hook=self.callbacks, trainer=self)
     
     @exception_handler
     def train(self, 
@@ -185,7 +187,7 @@ class Trainer(ABC):
                 
                 self.state = TrainerState.TRAINING_STEP_START
 
-                batch_loss, batch_metrics = self.training_step(batch=batch)
+                batch_loss, batch_metrics = self.train_one_step(batch=batch)
 
                 lr = self.get_lr()
 
@@ -215,7 +217,6 @@ class Trainer(ABC):
                     "remain": remain,
                     "elapsed_epoch": elapsed_epoch,
                     "remain_epoch": remain_epoch,
-                    "train_metrics_list": list(train_metrics.average.keys()),
                     "train_metrics": train_metrics.average,
                     "train_metrics_batch": batch_metrics,
                     "train_metrics_epoch": epoch_train_metrics.average,
@@ -231,7 +232,7 @@ class Trainer(ABC):
                 if self.validation_loader is not None:
                     if (self.history["step"] % self.validation_steps) == 0:
 
-                        validation_loss, validation_metrics, validation_outputs = self.validation_loop(loader=self.validation_loader)
+                        validation_loss, validation_metrics, validation_outputs = self.validate(loader=self.validation_loader)
 
                         self.scheduling_step(loss=validation_loss, loop="validation")
 
@@ -299,19 +300,18 @@ class Trainer(ABC):
                     self.scheduler.step()
 
                     
-    def training_step(self, batch:Any) -> Tuple[torch.Tensor, dict]:
+    def train_one_step(self, batch:Any) -> Tuple[torch.Tensor, dict]:
         self.model.train()
         with self.context_manager():
-            loss, outputs = self.compute_loss(batch=batch, return_outputs=True)
-            outputs = outputs.detach()
-            metrics = self.compute_metrics(batch=batch, outputs=outputs)
+            batch_outputs = self.training_step(batch=batch)
+            batch_loss, batch_metrics = self.__unpack_batch_outputs(batch_outputs=batch_outputs)
 
             if self.gradient_accumulation_steps > 1:
-                loss /= self.gradient_accumulation_steps
+                batch_loss /= self.gradient_accumulation_steps
             
-            loss = self.backward_step(loss=loss)
+            batch_loss = self.backward_step(loss=batch_loss)
 
-        return loss.detach(), metrics
+        return batch_loss.detach(), batch_metrics
                 
     def clip_gradients(self) -> None:
         if self.gradient_norm is not None:
@@ -325,7 +325,7 @@ class Trainer(ABC):
     
 
     @exception_handler
-    def validation_loop(self, loader:DataLoader) -> Tuple[Any, dict]:
+    def validate(self, loader:DataLoader) -> Tuple[Any, dict]:
         self.validation_loader = loader
 
         self.model.to(self.device)
@@ -345,9 +345,8 @@ class Trainer(ABC):
 
                     self.state = TrainerState.VALIDATION_STEP_START
 
-                    batch_loss, batch_outputs = self.compute_loss(batch=batch, return_outputs=True)
-                    batch_outputs = batch_outputs.detach()
-                    batch_metrics = self.compute_metrics(batch=batch, outputs=batch_outputs)
+                    batch_outputs = self.training_step(batch=batch)
+                    batch_loss, batch_metrics = self.__unpack_batch_outputs(batch_outputs=batch_outputs)
 
                     loss.update(batch_loss.item(), n=batch_size)
                     metrics.update(batch_metrics, n=batch_size)
@@ -360,7 +359,6 @@ class Trainer(ABC):
                         "validation_remain": remain,
                         "validation_loss": loss.average,
                         "validation_loss_batch": batch_loss.item(),
-                        "validation_metrics_list": list(metrics.average.keys()),
                         "validation_metrics": metrics.average,
                         "validation_metrics_batch": batch_metrics,
                     })
@@ -384,14 +382,65 @@ class Trainer(ABC):
 
         return (loss.average, metrics.average, outputs)
 
+
+    @exception_handler
+    def predict(self, loader:DataLoader):
+        self.prediction_loader = loader      
+        steps = len(self.loader)
+        self.history["prediction_steps"] = steps
+        timer = Timer()
+        outputs = []
+
+        self.state = TrainerState.PREDICTION_START
+        
+        self.model.to(self.device)
+        self.model.eval()   
+        for step, batch in enumerate(self.loader, 1):
+            self.history["prediction_step"] = step
+            
+            with torch.no_grad():
+                with self.context_manager():
+                    self.state = TrainerState.PREDICTION_STEP_START
+
+                    batch_outputs = self.prediction_step(batch=batch)
+
+                    elapsed, remain = timer(self.history["prediction_step"]/self.history["prediction_steps"])
+                    self.history.update({
+                        "prediction_elapsed": elapsed,
+                        "prediction_remain": remain,
+                    })
+                    
+                    self.state = TrainerState.PREDICTION_STEP_END
+
+                    batch_outputs = batch_outputs.to("cpu")
+                    outputs.extend(batch_outputs)
+                    
+        self.state = TrainerState.PREDICTION_END
+
+        outputs = torch.stack(outputs, dim=0)
+    
+        return outputs
+
+
     @abstractmethod
-    def compute_loss(self, 
-                      batch:Any, 
-                      return_outputs:bool=True) -> torch.Tensor:
+    def training_step(self, batch):
         pass
 
-    def compute_metrics(self, batch:Any, outputs):
-        return {}
+    @abstractmethod
+    def prediction_step(self, batch:Any):
+        pass
+
+
+    def __unpack_batch_outputs(self, batch_outputs):
+        if isinstance(batch_outputs, tuple):
+            batch_loss, batch_metrics = batch_outputs
+        else:
+            batch_loss = batch_outputs
+            batch_metrics = {}
+
+        return batch_loss, batch_metrics
+
+
 
     def on_validation_end(self, outputs) -> None:
         """

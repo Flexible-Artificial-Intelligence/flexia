@@ -95,6 +95,8 @@ class Trainer(ABC):
         assert isinstance(self.gradient_accumulation_steps, int), f"`gradient_accumulation_steps` must be integer type, but given `{type(self.gradient_accumulation_steps)}`"
 
         self.precision_dtype = precision_dtypes[self.precision.value]
+        self.loggers = Loggers(self.loggers)
+        self.callbacks = Loggers(self.callbacks)
 
         if self.gradient_scaling and self.scaler is None and self.amp:
             self.scaler = GradScaler()

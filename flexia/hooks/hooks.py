@@ -1,4 +1,6 @@
+from flexia.hooks.lambda_hook import LambdaHook
 from .hook import Hook
+from .lambda_hook import LambdaHook
 
 
 
@@ -8,8 +10,8 @@ class Hooks:
 
         if isinstance(self.hooks, list):
             for hook in self.hooks:
-                if not isinstance(hook, Hook):
-                    raise TypeError(f"{hook} must be subclass of {self.__class__.__name__}")
+                if not isinstance(hook, Hook) or not isinstance(hook, LambdaHook):
+                    raise TypeError(f"{hook} must be subclass of {Hook.__name__}")
         else:
             raise TypeError("`hooks` must be list")
         

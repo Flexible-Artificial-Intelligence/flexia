@@ -10,8 +10,8 @@ class Hooks:
 
         if isinstance(self.hooks, list):
             for hook in self.hooks:
-                if not isinstance(hook, Hook) or not isinstance(hook, LambdaHook):
-                    raise TypeError(f"{hook} must be subclass of {Hook.__name__}")
+                if not isinstance(hook, Hook) and not isinstance(hook, LambdaHook):
+                    raise TypeError(f"{hook} must be subclass of {Hook.__name__} or {LambdaHook.__name__}")
         else:
             raise TypeError("`hooks` must be list")
         

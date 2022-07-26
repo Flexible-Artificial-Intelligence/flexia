@@ -310,8 +310,7 @@ class Trainer(ABC):
     def train_one_step(self, batch:Any) -> Tuple[torch.Tensor, dict]:
         self.model.train()
         with self.context_manager():
-            batch_outputs = self.training_step(batch=batch)
-            batch_loss, batch_metrics = self.__unpack_batch_outputs(batch_outputs=batch_outputs)
+            batch_loss, batch_metrics, batch_outputs = self.training_step(batch=batch)
 
             if self.gradient_accumulation_steps > 1:
                 batch_loss /= self.gradient_accumulation_steps
@@ -352,8 +351,7 @@ class Trainer(ABC):
 
                     self.state = TrainerState.VALIDATION_STEP_START
 
-                    batch_outputs = self.training_step(batch=batch)
-                    batch_loss, batch_metrics = self.__unpack_batch_outputs(batch_outputs=batch_outputs)
+                    batch_loss, batch_metrics, batch_outputs = self.training_step(batch=batch)
 
                     loss.update(batch_loss.item(), n=batch_size)
                     metrics.update(batch_metrics, n=batch_size)
@@ -436,17 +434,6 @@ class Trainer(ABC):
     @abstractmethod
     def prediction_step(self, batch:Any):
         pass
-
-
-    def __unpack_batch_outputs(self, batch_outputs):
-        if isinstance(batch_outputs, tuple):
-            batch_loss, batch_metrics = batch_outputs
-        else:
-            batch_loss = batch_outputs
-            batch_metrics = {}
-
-        return batch_loss, batch_metrics
-
 
 
     def on_validation_end(self, outputs) -> None:

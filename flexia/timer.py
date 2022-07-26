@@ -21,14 +21,12 @@ class Timer:
     def __init__(self):
         self.start = datetime.now()
         
-        self.elapsed_time = timedelta(seconds=0)
         self.remain_time = timedelta(seconds=0)
 
     
     @property
     def elapsed_time(self):
         return datetime.now() - self.start
-
 
     def __call__(self, fraction:float) -> Tuple[str, str]:                
         elapsed_seconds = self.elapsed_time.total_seconds()        

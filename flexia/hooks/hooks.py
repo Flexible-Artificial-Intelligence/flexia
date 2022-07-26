@@ -3,7 +3,7 @@ from .hook import Hook
 
 
 class Hooks:
-    def __init__(self, hooks=None):
+    def __init__(self, hooks=[]):
         self.hooks = hooks
 
         if isinstance(self.hooks, list):

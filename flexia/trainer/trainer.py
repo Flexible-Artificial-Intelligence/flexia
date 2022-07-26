@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+from asyncio.log import logger
 from sklearn import metrics
 import torch
 from torch import nn, optim
@@ -80,8 +81,11 @@ class Trainer(ABC):
         self.loggers = loggers
         self.callbacks = callbacks
 
+        self.loggers =  self.loggers if self.loggers is not None else []
         self.loggers = Loggers(self.loggers)
-        self.callbacks = Loggers(self.callbacks)
+        
+        self.callbacks =  self.callbacks if self.callbacks is not None else []
+        self.callbacks = Callbacks(self.callbacks)
 
         self._state = TrainerState.INIT_START
         self.state = self._state

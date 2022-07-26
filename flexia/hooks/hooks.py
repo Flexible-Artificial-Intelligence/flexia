@@ -9,7 +9,7 @@ class Hooks:
         if isinstance(self.hooks, list):
             for hook in self.hooks:
                 if not isinstance(hook, Hook):
-                    raise TypeError(f"{hook} must be subclass of {self.__name__}")
+                    raise TypeError(f"{hook} must be subclass of {self.__class__.__name__}")
         else:
             raise TypeError("`hooks` must be list")
         

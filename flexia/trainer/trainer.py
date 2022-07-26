@@ -94,8 +94,9 @@ class Trainer(ABC):
         if not isinstance(self.model, nn.Module):
             raise TypeError("model")
 
-        if not isinstance(self.optimizer, optim.Optimizer):
-            raise TypeError("optimizer")
+        if self.optimizer is not None:
+            if not isinstance(self.optimizer, optim.Optimizer):
+                raise TypeError("optimizer")
 
 
         assert 0 < self.epochs, f"`epochs` must be greater than 0, but given {self.epochs}."

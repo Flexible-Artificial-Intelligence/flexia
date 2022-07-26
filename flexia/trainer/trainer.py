@@ -392,7 +392,7 @@ class Trainer(ABC):
     @exception_handler
     def predict(self, loader:DataLoader):
         self.prediction_loader = loader      
-        steps = len(self.loader)
+        steps = len(self.prediction_loader)
         self.history["prediction_steps"] = steps
         timer = Timer()
         outputs = []
@@ -401,7 +401,7 @@ class Trainer(ABC):
         
         self.model.to(self.device)
         self.model.eval()   
-        for step, batch in enumerate(self.loader, 1):
+        for step, batch in enumerate(self.prediction_loader, 1):
             self.history["prediction_step"] = step
             
             with torch.no_grad():

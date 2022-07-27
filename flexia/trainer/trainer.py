@@ -445,6 +445,7 @@ class Trainer(ABC):
 
         pass
 
+    # Aliases
     fit = train
     evaluate = validate
     inference = predict

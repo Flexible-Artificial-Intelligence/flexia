@@ -43,7 +43,7 @@ class ModelCheckpoint(Callback):
                  custom_keys={"model": "model_state",  
                               "optimizer": "optimizer_state", 
                               "scheduler": "scheduler_state"}, 
-                save_checkpoint_on_exception=True, 
+                save_checkpoint_on_exception=False, 
                 save_interval=None, 
                 save_interval_strategy="off", 
                 save_interval_directory=None, 

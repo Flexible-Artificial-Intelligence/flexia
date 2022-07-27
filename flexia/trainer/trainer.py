@@ -23,6 +23,7 @@ from typing import Optional, Union, Any, Tuple, List
 from torch.utils.data import DataLoader
 from abc import ABC, abstractmethod
 import contextlib
+import math
 import os
 
 from .enums import TrainerState
@@ -158,7 +159,7 @@ class Trainer(ABC):
         self.model.to(self.device)
         
         if self.validation_strategy == IntervalStrategy.EPOCH:
-            self.validation_steps = int(len(self.train_loader) * self.validation_steps)
+            self.validation_steps = math.ceil(len(self.train_loader) * self.validation_steps)
         else:
             # validation model after N training steps!
             self.validation_steps = int(self.validation_steps * self.gradient_accumulation_steps)

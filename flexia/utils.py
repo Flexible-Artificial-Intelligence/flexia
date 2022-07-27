@@ -25,7 +25,6 @@ import os
 
 
 from .import_utils import is_transformers_available, is_bitsandbytes_available, is_torch_xla_available
-from .exceptions import LibraryException
 from .enums import SchedulerLibrary, OptimizerLibrary, DeviceType
 
 
@@ -53,6 +52,8 @@ def initialize_device(device=None):
             device = torch.device("cuda:0")
         elif is_tpu_available():
             device = xm.xla_device(n=1)
+        elif is_mps_available():
+            device = torch.device("mps:0")
         else:
             device = torch.device("cpu")
 
@@ -237,7 +238,7 @@ def get_scheduler(optimizer:Optimizer, name:str="LinearLR", parameters:dict={}, 
         if is_transformers_available():
             module = transformers
         else:
-            raise LibraryException("transformers")
+            raise ValueError(f"Library `{library}` is not found or not provided.")
 
     scheduler = __get_from_library(library=module, 
                                    name=name, 
@@ -272,13 +273,13 @@ def get_optimizer(model_parameters:Any, name:str="AdamW", parameters:dict={}, li
         if is_transformers_available():
             module = transformers
         else:
-            raise LibraryException("transformers")
+            raise ValueError(f"Library `{library}` is not found or not provided.")
 
     elif library == OptimizerLibrary.BITSANDBYTES:
         if is_bitsandbytes_available():
             module = bnb.optim
         else:
-            raise LibraryException("bitsandbytes")
+            raise ValueError(f"Library `{library}` is not found or not provided.")
 
     optimizer = __get_from_library(library=module, 
                                    name=name, 
@@ -324,3 +325,7 @@ def is_tpu_available():
         return len(devices) > 0
     else:
         return False
+        
+
+def is_mps_available():
+    return torch.backends.mps.is_available()

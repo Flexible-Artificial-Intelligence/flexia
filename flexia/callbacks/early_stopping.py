@@ -22,7 +22,7 @@ from .utils import compare, get_delta_value
 from .enums import Modes
 
 
-class EarlyStopping(Callback):   
+class EarlyStopping(Callback):  
     def __init__(self, 
                  monitor_value="validation_loss",
                  mode:str="min", 

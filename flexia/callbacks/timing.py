@@ -57,6 +57,6 @@ class Timing(Callback):
         
         if stop:
             case = "The time reaches duration limit."
-            logger.info(case)
+            print(case)
         
         return stop

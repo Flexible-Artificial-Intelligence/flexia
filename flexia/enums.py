@@ -55,6 +55,7 @@ class DeviceType(ExplicitEnum, EqualEnum):
     CPU = "cpu"
     CUDA = "cuda"
     TPU = "xla"
+    MPS = "mps"
 
     @classmethod
     def _missing_(cls, value):

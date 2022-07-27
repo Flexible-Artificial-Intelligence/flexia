@@ -158,7 +158,7 @@ class Trainer(ABC):
         self.model.to(self.device)
         
         if self.validation_strategy == IntervalStrategy.EPOCH:
-            self.validation_steps = len(self.train_loader) * self.validation_steps
+            self.validation_steps = int(len(self.train_loader) * self.validation_steps)
         else:
             # validation model after N training steps!
             self.validation_steps = int(self.validation_steps * self.gradient_accumulation_steps)

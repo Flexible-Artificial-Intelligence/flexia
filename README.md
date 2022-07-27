@@ -21,7 +21,8 @@ Flexia is mostly based on the PyTorch framework, but furthermore supports many u
 
 ## Community
 
+Flexia is always open to your issues and pull requests! 
+
 ## TO-DO
 
-- [ ] 
-
+- [ ] Distributed Training 

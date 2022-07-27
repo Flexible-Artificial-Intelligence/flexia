@@ -16,6 +16,7 @@
 import os
 import gc
 import numpy as np
+import torch
 from typing import Union
 
 from .callback import Callback
@@ -35,6 +36,8 @@ class ModelCheckpoint(Callback):
                  overwriting:bool=False, 
                  filename_format:str="checkpoint.pth", 
                  num_candidates:Union[str, float, int]=1, 
+                 save_model_state_at_end=False,
+                 model_path=None,
                  save_optimizer_state=True, 
                  save_scheduler_state=True, 
                  custom_keys={"model": "model_state",  
@@ -53,6 +56,8 @@ class ModelCheckpoint(Callback):
         self.overwriting = overwriting
         self.filename_format = filename_format
         self.num_candidates = num_candidates
+        self.save_model_state_at_end = save_model_state_at_end
+        self.model_path = model_path
         self.save_optimizer_state = save_optimizer_state
         self.save_scheduler_state = save_scheduler_state
         self.custom_keys = custom_keys
@@ -79,6 +84,9 @@ class ModelCheckpoint(Callback):
                     remove_files_from_directory(directory=self.directory)
             else:
                 raise NotADirectoryError(f"'{self.directory}' is not directory.")
+
+        if self.model_path is None:
+            self.model_path = os.path.join(self.directory, "model.pth")
 
         if self.save_interval_filename_format is None:
             if self.save_interval_strategy == IntervalStrategy.EPOCH:
@@ -203,10 +211,17 @@ class ModelCheckpoint(Callback):
 
         return checkpoint_path, checkpoint
 
+    def save_model(self, trainer, path):
+        model_state = trainer.model.state_dict()
+        saved_state = torch.save(model_state, path)
+
 
     def on_exception(self, trainer):
         if self.save_checkpoint_on_exception:
             filename_format = "last_checkpoint_step_{step}_epoch_{epoch}.pth"
             checkpoint_path, checkpoint = self.save_checkpoint(trainer=trainer, filename_format=filename_format)
 
-        
+    
+    def on_training_end(self, trainer) -> None:
+        if self.save_model_state_at_end:
+            self.save_model(trainer=trainer, path=self.model_path)

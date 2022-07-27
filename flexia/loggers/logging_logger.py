@@ -90,7 +90,8 @@ class LoggingLogger(Logger):
 
             metrics_string = format_metrics(metrics=metrics, decimals=self.decimals, sep=self.sep)
 
-            self.logger.info(f"[Validation] {step:{steps_margin}d}/{steps:{steps_margin}d}{self.sep}"
+            self.logger.info(f"[Validation] "
+                             f"step: {step:{steps_margin}d}/{steps:{steps_margin}d}{self.sep}"
                              f"elapsed: {elapsed}{self.sep}"
                              f"remain: {remain}{self.sep}"
                              f"loss: {loss:.{self.decimals}f}"
@@ -106,6 +107,7 @@ class LoggingLogger(Logger):
             remain = format_time(trainer.history["prediction_remain"], time_format=self.time_format)
             
             steps_margin = len(str(steps))
-            self.logger.info(f"[Prediction] {step:{steps_margin}d}/{steps:{steps_margin}d}{self.sep}"
+            self.logger.info(f"[Prediction] "
+                             f"step: {step:{steps_margin}d}/{steps:{steps_margin}d}{self.sep}"
                              f"elapsed: {elapsed}{self.sep}"
-                             f"remain: {remain}{self.sep}")
+                             f"remain: {remain}")

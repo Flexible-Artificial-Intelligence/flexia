@@ -72,7 +72,8 @@ class PrintLogger(Logger):
 
             metrics_string = format_metrics(metrics=metrics, decimals=self.decimals, sep=self.sep)
 
-            print(f"[Validation] {step:{steps_margin}d}/{steps:{steps_margin}d}{self.sep}"
+            print(f"[Validation]"
+                  f"step: {step:{steps_margin}d}/{steps:{steps_margin}d}{self.sep}"
                   f"elapsed: {elapsed}{self.sep}"
                   f"remain: {remain}{self.sep}"
                   f"loss: {loss:.{self.decimals}f}"
@@ -88,6 +89,7 @@ class PrintLogger(Logger):
             remain = format_time(trainer.history["prediction_remain"], time_format=self.time_format)
 
             steps_margin = len(str(steps))
-            print(f"[Prediction] {step:{steps_margin}d}/{steps:{steps_margin}d}{self.sep}"
+            print(f"[Prediction] " 
+                  f"step: {step:{steps_margin}d}/{steps:{steps_margin}d}{self.sep}"
                   f"elapsed: {elapsed}{self.sep}"
-                  f"remain: {remain}{self.sep}")
+                  f"remain: {remain}")

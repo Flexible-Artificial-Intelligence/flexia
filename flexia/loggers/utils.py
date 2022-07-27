@@ -56,6 +56,7 @@ def format_time(time:timedelta, time_format:str="{hours:02d}:{minutes:02d}:{seco
     time = get_time_from_timedelta(time)
     return time_format.format(**time)
 
+
 def get_time_from_timedelta(delta:timedelta) -> dict:
     time = {"days": delta.days}
     time["hours"], rem = divmod(delta.seconds, 3600)

@@ -444,3 +444,7 @@ class Trainer(ABC):
         """
 
         pass
+
+    fit = train
+    evaluate = validate
+    inference = predict

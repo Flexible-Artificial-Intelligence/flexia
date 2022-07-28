@@ -34,8 +34,6 @@ class WANDBLogger(Logger):
         if self.api_key is not None:
             wandb.login(key=self.api_key)
 
-        os.environ["WANDB_SILENT"] = str(int(self.silent))
-
         wandb.init(**self.kwargs)
         print(f"Weights & Biases Run URL: {wandb.run.get_url()}")
 

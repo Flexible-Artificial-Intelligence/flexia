@@ -20,3 +20,4 @@ from .logger import Logger
 from .tqdm_logger import TQDMLogger
 from .data_frame_logger import DataFrameLogger
 from .loggers import Loggers
+from .keras_logger import KerasLogger

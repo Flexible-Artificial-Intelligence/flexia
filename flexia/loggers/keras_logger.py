@@ -21,12 +21,12 @@ class KerasLogger(Logger):
 
     def on_epoch_start(self, trainer) -> None:
         steps_epoch = trainer.history["steps_epoch"]
-        epoch = trainer.history["epoch"]
-        num_epochs = trainer.history["epochs"]
+        epoch = trainer.history["epoch"] - 1
+        epochs = trainer.history["epochs"]
 
         self.bar = Kbar(target=steps_epoch, 
                         epoch=epoch, 
-                        num_epochs=num_epochs, 
+                        num_epochs=epochs, 
                         width=self.width, 
                         verbose=self.verbose, 
                         interval=self.interval, 

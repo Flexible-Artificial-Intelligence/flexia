@@ -51,4 +51,4 @@ class KerasLogger(Logger):
         validation_metrics = [(f"val_{k}", v) for k, v in validation_metrics.items()]
 
         values = [("val_loss", validation_loss)] + validation_metrics
-        self.bar.update(1, values=values)
+        self.bar.add(1, values=values)

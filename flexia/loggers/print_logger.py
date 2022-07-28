@@ -72,7 +72,7 @@ class PrintLogger(Logger):
 
             metrics_string = format_metrics(metrics=metrics, decimals=self.decimals, sep=self.sep)
 
-            print(f"[Validation]"
+            print(f"[Validation] "
                   f"step: {step:{steps_margin}d}/{steps:{steps_margin}d}{self.sep}"
                   f"elapsed: {elapsed}{self.sep}"
                   f"remain: {remain}{self.sep}"

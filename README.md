@@ -1,4 +1,4 @@
-![Flexia logo](images/flexia_logo.png)
+![Flexia logo](assets/images/flexia_logo.png)
 
 
 <center>
@@ -25,4 +25,7 @@ Flexia is always open to your issues and pull requests!
 
 ## TO-DO
 
+- [ ] Documentation (readthedocs)
+- [ ] Python package (PyPi)
 - [ ] Distributed Training 
+- [ ] Tests

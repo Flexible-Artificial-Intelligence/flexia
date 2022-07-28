@@ -1,5 +1,5 @@
 from .logger import Logger
-from ..third_party.pkbar import Kbar
+from ..third_party.pkbar import Kbar, Pbar
 
 
 class KerasLogger(Logger):
@@ -52,3 +52,13 @@ class KerasLogger(Logger):
 
         values = [("val_loss", validation_loss)] + validation_metrics
         self.bar.add(1, values=values)
+
+        
+    def on_prediction_start(self, trainer) -> None:
+        prediction_steps = trainer.history["prediction_steps"]
+        self.prediction_bar = Pbar(name="Prediction", target=prediction_steps, width=self.width)
+
+
+    def on_prediction_step_end(self, trainer) -> None:
+        prediction_step = trainer.history["prediction_step"]
+        self.prediction_bar.update(prediction_step)

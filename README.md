@@ -29,3 +29,12 @@ Flexia is always open to your issues and pull requests!
 - [ ] Python package (PyPi)
 - [ ] Distributed Training 
 - [ ] Tests
+- [ ] GPUAccelerator
+- [ ] TPUAccelerator
+- [ ] CPUAccelerator
+- [ ] AcceleratorCallback
+- [ ] DataFrameLogger
+- [ ] TensorBoardLogger
+- [ ] Trainer state
+- [ ] Callbacks state
+- [ ] Loggers state

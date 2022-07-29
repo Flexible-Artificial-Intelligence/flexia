@@ -112,7 +112,9 @@ def load_checkpoint(path:str,
                     strict:bool=True,  
                     custom_keys:Optional["dict[str, str]"]=dict(model="model_state", 
                                                                 optimizer="optimizer_state",
-                                                                scheduler="scheduler_state")) -> dict:
+                                                                scheduler="scheduler_state"), 
+                    eval_mode=False, 
+                    load_states=True) -> dict:
 
         """
         Loads checkpoint and then load state for model, optimizer or scheduler, if they are set. 
@@ -135,22 +137,26 @@ def load_checkpoint(path:str,
         
         model_key = custom_keys.get("model", "model_state")
         model_state = checkpoint[model_key]
-        model.load_state_dict(model_state, strict=strict)
+        
+        if load_states:
+            model.load_state_dict(model_state, strict=strict)
 
         if optimizer is not None:
             optimizer_key = custom_keys.get("optimizer", "optimizer_state")
             optimizer_state = checkpoint.get(optimizer_key)
 
-            if optimizer_state is not None:
+            if optimizer_state is not None and load_states:
                 optimizer.load_state_dict(optimizer_state, strict=strict)
 
         if scheduler is not None:
             scheduler_key = custom_keys.get("scheduler", "scheduler_state")
             scheduler_state = checkpoint.get(scheduler_key)
             
-            if scheduler_state is not None:
+            if scheduler_state is not None and load_states:
                 scheduler.load_state_dict(scheduler_state, strict=strict)
     
+        if eval_mode:
+            model.eval()
 
         return checkpoint
 

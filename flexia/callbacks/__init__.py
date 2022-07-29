@@ -19,3 +19,4 @@ from .early_stopping import EarlyStopping
 from .timing import Timing
 from .lambda_callback import LambdaCallback
 from .callbacks import Callbacks
+from .accelerator_callback import AcceleratorCallback

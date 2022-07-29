@@ -9,7 +9,8 @@ class KerasLogger(Logger):
                  interval=0.05, 
                  stateful_metrics=None, 
                  always_stateful=False, 
-                 unit_name="step"):
+                 unit_name="step", 
+                 show_device_stats=False):
 
         self.width = width
         self.verbose = verbose
@@ -17,6 +18,7 @@ class KerasLogger(Logger):
         self.always_stateful = always_stateful
         self.stateful_metrics = stateful_metrics
         self.unit_name = unit_name
+        self.show_device_stats = show_device_stats
         self.bar = None
 
     def on_epoch_start(self, trainer) -> None:

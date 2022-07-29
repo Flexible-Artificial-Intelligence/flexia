@@ -27,7 +27,8 @@ class LoggingLogger(Logger):
                  decimals=4, 
                  sep=" - ",
                  level=logging.INFO, 
-                 time_format:str="{hours:02d}:{minutes:02d}:{seconds:02d}") -> None:
+                 time_format:str="{hours:02d}:{minutes:02d}:{seconds:02d}", 
+                 show_device_stats=False) -> None:
 
         super().__init__()
 
@@ -39,6 +40,7 @@ class LoggingLogger(Logger):
         self.level = level
         self.sep = sep
         self.time_format = time_format
+        self.show_device_stats = show_device_stats
 
         self.logger = None
 

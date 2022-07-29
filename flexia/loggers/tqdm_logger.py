@@ -25,13 +25,16 @@ class TQDMLogger(Logger):
                  bar_format="{l_bar} {bar} {n_fmt}/{total_fmt} - elapsed: {elapsed} - remain: {remaining}{postfix}", 
                  color="#000", 
                  decimals=4, 
-                 notebook=False, sep=" - "):
+                 notebook=False, 
+                 sep=" - ", 
+                 show_device_stats=False):
         
         self.bar_format = bar_format
         self.color = color
         self.decimals = decimals
         self.notebook = notebook
         self.sep = sep
+        self.show_device_stats = show_device_stats
 
     def on_epoch_start(self, trainer):
         epoch = trainer.history["epoch"]

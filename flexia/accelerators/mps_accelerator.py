@@ -1,0 +1,2 @@
+class MPSAccelerator:
+    pass

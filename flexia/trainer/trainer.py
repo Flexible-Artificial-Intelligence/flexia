@@ -13,8 +13,6 @@
 # limitations under the License.
 
 
-from asyncio.log import logger
-from sklearn import metrics
 import torch
 from torch import nn, optim
 from torch.cuda.amp import GradScaler
@@ -24,9 +22,8 @@ from torch.utils.data import DataLoader
 from abc import ABC, abstractmethod
 import contextlib
 import math
-import os
 
-from .enums import TrainerState
+from .enums import GradientClippingStrategy, TrainerState
 from ..timer import Timer
 from ..averager import Averager
 from ..loggers import Logger
@@ -56,7 +53,8 @@ class Trainer(ABC):
                  scaler:Optional["GradScaler"]=None,
                  precision="fp32",
                  amp=False,
-                 gradient_norm:float=None, 
+                 gradient_clipping_strategy="off",
+                 gradient_clipping_value:float=None, 
                  device:Optional[Union[str, torch.device]]="cpu", 
                  validation_strategy:str="epoch",
                  validation_steps:int=1, 
@@ -71,7 +69,8 @@ class Trainer(ABC):
         self.gradient_accumulation_steps = gradient_accumulation_steps
         self.gradient_scaling = gradient_scaling
         self.precision = Precision(precision)
-        self.gradient_norm = gradient_norm
+        self.gradient_clipping_strategy = GradientClippingStrategy(gradient_clipping_strategy)
+        self.gradient_clipping_value = gradient_clipping_value
         self.amp = amp
         self.device = initialize_device(device)
         self.device_type = DeviceType(self.device.type)
@@ -322,15 +321,20 @@ class Trainer(ABC):
         return batch_loss.detach(), batch_metrics
                 
     def clip_gradients(self) -> None:
-        if self.gradient_norm is not None:
+        if self.gradient_clipping_value is not None and self.gradient_clipping_strategy != GradientClippingStrategy.OFF:
             if self.device_type == DeviceType.TPU:
                 xm.reduce_gradients(self.optimizer)
 
             if self.scaler is not None:
                 self.scaler.unscale_(self.optimizer)
             
-            nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.gradient_norm)
-    
+            model_parameters = self.model.parameters()
+            
+            if self.gradient_clipping_strategy == GradientClippingStrategy.NORM:
+                nn.utils.clip_grad_norm_(model_parameters, max_norm=self.gradient_clipping_value)
+            elif self.gradient_clipping_strategy == GradientClippingStrategy.VALUE:
+                nn.utils.clip_grad_norm_(model_parameters, clip_value=self.gradient_clipping_value)
+
 
     @exception_handler
     def validate(self, loader:DataLoader) -> Tuple[Any, dict]:

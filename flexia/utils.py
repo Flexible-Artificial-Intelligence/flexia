@@ -82,6 +82,9 @@ def seed_everything(seed:Optional[int]=None) -> int:
     torch.cuda.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = True
+
+    if is_torch_xla_available():
+        xm.set_rng_seed(seed)
     
     return seed
     

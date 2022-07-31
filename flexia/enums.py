@@ -53,7 +53,7 @@ class IntervalStrategy(ExplicitEnum, EqualEnum):
 
 class DeviceType(ExplicitEnum, EqualEnum):
     CPU = "cpu"
-    CUDA = "cuda"
+    GPU = "cuda"
     TPU = "xla"
     MPS = "mps"
 

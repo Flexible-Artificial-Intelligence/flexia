@@ -1,23 +1,57 @@
+import torch
 from abc import ABC, abstractmethod
+
+from .enums import MemoryUnit
+from ..enums import DeviceType
 
 
 class Accelerator(ABC):
     def __init__(self, device):
-        self.device = device
+        self.device = torch.device(device)
+        self.device_type = DeviceType(self.device.type)
+        self.device_index = self.device.index
 
+    @property
     @abstractmethod
-    def get_memory_usage(self):
+    def memory_usage(self):
         pass
     
+    @property
     @abstractmethod
-    def get_memory(self):
+    def memory(self):
         pass
-
+    
+    @property
+    def memory_free(self):
+        return self.memory - self.memory_usage
+    
+    @property
     @abstractmethod
-    def get_device_stats(self):
+    def name(self):
+        pass
+    
+    @property
+    @abstractmethod
+    def stats(self):
         pass
 
     @staticmethod
     @abstractmethod
     def is_available(self):
         pass
+    
+    @property
+    def stats(self):
+        stats = {
+            "name": self.name, 
+            "memory": self.memory, 
+            "memory_usage": self.memory_usage, 
+            "memory_free": self.memory_free
+        }
+         
+        return stats
+    
+    def __str__(self):
+        return f"{self.__class__.__name__}(name='{self.name}', memory={self.memory}, memory_usage={self.memory_usage}, memory_free={self.memory_free})"
+    
+    __repr__ = __str__

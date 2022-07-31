@@ -1,0 +1,2 @@
+class AutoAccelerator:
+    pass

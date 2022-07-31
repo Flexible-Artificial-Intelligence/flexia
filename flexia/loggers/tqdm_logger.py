@@ -27,14 +27,14 @@ class TQDMLogger(Logger):
                  decimals=4, 
                  notebook=False, 
                  sep=" - ", 
-                 show_device_stats=False):
+                 log_accelerator_stats=False):
         
         self.bar_format = bar_format
         self.color = color
         self.decimals = decimals
         self.notebook = notebook
         self.sep = sep
-        self.show_device_stats = show_device_stats
+        self.log_accelerator_stats = log_accelerator_stats
 
     def on_epoch_start(self, trainer):
         epoch = trainer.history["epoch"]

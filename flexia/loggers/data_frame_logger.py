@@ -8,7 +8,7 @@ if is_pandas_available():
 
 
 class DataFrameLogger(Logger):
-    def __init__(self, ):
+    def __init__(self):
         pass
 
     def on_training_start(self, trainer) -> None:

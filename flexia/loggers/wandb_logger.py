@@ -24,10 +24,17 @@ if is_wandb_available():
 
 
 class WANDBLogger(Logger):
-    def __init__(self, api_key=None, finish=True, silent=False, **kwargs):
+    def __init__(self, 
+                 api_key=None, 
+                 finish=True, 
+                 silent=False, 
+                 log_accelerator_stats=False, 
+                 **kwargs):
+                 
         self.api_key = api_key
         self.finish = finish
         self.silent = silent
+        self.log_accelerator_stats = log_accelerator_stats
         self.kwargs = kwargs
 
     def on_training_start(self, trainer):

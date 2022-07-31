@@ -23,14 +23,14 @@ class PrintLogger(Logger):
                  decimals:int=3, 
                  sep=" - ", 
                  time_format:str="{hours:02d}:{minutes:02d}:{seconds:02d}", 
-                 show_device_stats=False) -> None:
+                 log_accelerator_stats=False) -> None:
         super().__init__()
 
         self.verbose = verbose
         self.decimals = decimals
         self.time_format = time_format
         self.sep = sep
-        self.show_device_stats = show_device_stats
+        self.log_accelerator_stats = log_accelerator_stats
 
     def on_training_step_end(self, trainer):
         step = trainer.history["step_epoch"]

@@ -35,6 +35,6 @@ Flexia is always open to your issues and pull requests!
 - [ ] AcceleratorCallback
 - [ ] DataFrameLogger
 - [ ] TensorBoardLogger
-- [ ] Trainer state
+- [ ] Trainer resuming
 - [ ] Callbacks state
 - [ ] Loggers state

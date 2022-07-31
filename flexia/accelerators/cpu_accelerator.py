@@ -2,6 +2,7 @@ import psutil
 import os
 import platform
 import subprocess
+import re
 
 from .accelerator import Accelerator
 
@@ -16,6 +17,7 @@ class CPUAccelerator(Accelerator):
         """
         https://stackoverflow.com/a/13078519
         """
+
         if platform.system() == "Windows":
             return platform.processor().strip()
         elif platform.system() == "Darwin":

@@ -35,5 +35,5 @@ class GPUAccelerator(Accelerator):
         return self.device_properties.name
 
     @staticmethod
-    def is_available(self):
+    def is_available():
         return torch.cuda.is_available()

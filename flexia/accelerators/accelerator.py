@@ -1,7 +1,6 @@
 import torch
 from abc import ABC, abstractmethod
 
-from .enums import MemoryUnit
 from ..enums import DeviceType
 
 
@@ -37,7 +36,7 @@ class Accelerator(ABC):
 
     @staticmethod
     @abstractmethod
-    def is_available(self):
+    def is_available():
         pass
     
     @property

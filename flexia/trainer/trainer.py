@@ -328,12 +328,10 @@ class Trainer(ABC):
             if self.scaler is not None:
                 self.scaler.unscale_(self.optimizer)
             
-            model_parameters = self.model.parameters()
-            
             if self.gradient_clipping_strategy == GradientClippingStrategy.NORM:
-                nn.utils.clip_grad_norm_(model_parameters, max_norm=self.gradient_clipping_value)
+                nn.utils.clip_grad_norm_(parameters=self.model.parameters(), max_norm=self.gradient_clipping_value)
             elif self.gradient_clipping_strategy == GradientClippingStrategy.VALUE:
-                nn.utils.clip_grad_norm_(model_parameters, clip_value=self.gradient_clipping_value)
+                nn.utils.clip_grad_norm_(parameters=self.model.parameters(), clip_value=self.gradient_clipping_value)
 
 
     @exception_handler

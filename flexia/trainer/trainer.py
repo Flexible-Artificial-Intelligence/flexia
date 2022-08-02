@@ -126,7 +126,7 @@ class Trainer(ABC):
 
     def context_manager(self):
         if self.accelerator.device_type != DeviceType.TPU:
-            manager = torch.autocast(device_type=self.accelerator.device_type, 
+            manager = torch.autocast(device_type=self.accelerator.device_type.value, 
                                      dtype=self.precision_dtype, 
                                      enabled=self.amp)
         else:

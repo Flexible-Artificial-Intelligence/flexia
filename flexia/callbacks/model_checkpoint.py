@@ -49,6 +49,8 @@ class ModelCheckpoint(Callback):
                 save_interval_directory=None, 
                 save_interval_filename_format=None):
         
+        super().__init__()
+
         self.monitor_value = monitor_value
         self.mode = Modes(mode)
         self.delta = delta

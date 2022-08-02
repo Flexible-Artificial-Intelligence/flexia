@@ -2,16 +2,18 @@ import torch
 from abc import ABC, abstractmethod
 
 from ..enums import DeviceType
+from .enums import MemoryUnit
+from ..third_party.addict import Dict
 
 
 class Accelerator(ABC):
-    def __init__(self, device):
+    def __init__(self, device, unit="MB"):
         self.device = torch.device(device)
         self.device_type = DeviceType(self.device.type)
         self.device_index = self.device.index
+        self.unit = MemoryUnit(unit)
 
     @property
-    @abstractmethod
     def memory_usage(self):
         pass
     
@@ -21,7 +23,7 @@ class Accelerator(ABC):
         pass
     
     @property
-    def memory_free(self):
+    def memory_available(self):
         return self.memory - self.memory_usage
     
     @property
@@ -41,16 +43,16 @@ class Accelerator(ABC):
     
     @property
     def stats(self):
-        stats = {
+        stats = Dict({
             "name": self.name, 
             "memory": self.memory, 
             "memory_usage": self.memory_usage, 
-            "memory_free": self.memory_free
-        }
+            "memory_available": self.memory_available
+        })
          
         return stats
     
     def __str__(self):
-        return f"{self.__class__.__name__}(name='{self.name}', memory={self.memory}, memory_usage={self.memory_usage}, memory_free={self.memory_free})"
+        return f"{self.__class__.__name__}(name='{self.name}', memory={self.memory}, memory_usage={self.memory_usage}, memory_available={self.memory_available})"
     
     __repr__ = __str__

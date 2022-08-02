@@ -5,11 +5,13 @@ import subprocess
 import re
 
 from .accelerator import Accelerator
+from .utils import convert_bytes
 
 
 class CPUAccelerator(Accelerator):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        
         self.virtual_memory = psutil.virtual_memory()
         self.__name = self.__get_processor_name()
     
@@ -34,11 +36,13 @@ class CPUAccelerator(Accelerator):
     
     @property
     def memory(self):
-        return self.virtual_memory.total
+        memory = convert_bytes(bytes=self.virtual_memory.total, from_unit="KB", to_unit=self.unit)
+        return memory
         
     @property
     def memory_usage(self):
-        return self.virtual_memory.used
+        memory_usage = convert_bytes(bytes=self.virtual_memory.used, from_unit="KB", to_unit=self.unit)
+        return memory_usage
 
     @property
     def name(self):

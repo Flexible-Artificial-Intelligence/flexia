@@ -12,6 +12,8 @@ class KerasLogger(Logger):
                  unit_name="step", 
                  log_accelerator_stats=False):
 
+        super().__init__()
+
         self.width = width
         self.verbose = verbose
         self.interval = interval

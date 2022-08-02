@@ -3,6 +3,7 @@ from pynvml import nvmlInit, nvmlDeviceGetHandleByIndex, nvmlDeviceGetMemoryInfo
 
 from .accelerator import Accelerator
 from ..enums import DeviceType
+from .utils import convert_bytes
 
 
 nvmlInit()
@@ -24,11 +25,13 @@ class GPUAccelerator(Accelerator):
     
     @property
     def memory(self):
-        return self.nvml_info.total
+        memory = convert_bytes(bytes=self.nvml_info.total, from_unit="KB", to_unit=self.unit)
+        return memory
         
     @property
     def memory_usage(self):
-        return self.nvml_info.used
+        memory_usage = convert_bytes(bytes=self.nvml_info.used, from_unit="KB", to_unit=self.unit)
+        return memory_usage
 
     @property
     def name(self):

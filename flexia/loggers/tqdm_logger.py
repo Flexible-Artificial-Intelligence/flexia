@@ -29,6 +29,8 @@ class TQDMLogger(Logger):
                  sep=" - ", 
                  log_accelerator_stats=False):
         
+        super().__init__()
+        
         self.bar_format = bar_format
         self.color = color
         self.decimals = decimals

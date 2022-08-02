@@ -28,13 +28,14 @@ from ..timer import Timer
 from ..averager import Averager
 from ..loggers import Logger
 from ..callbacks import Callback
-from ..utils import get_lr, initialize_device, precision_dtypes
+from ..utils import get_lr, precision_dtypes
 from ..third_party.addict import Dict
 from ..enums import Precision, IntervalStrategy, DeviceType
 from ..hooks.utils import run_hook, exception_handler
 from ..import_utils import is_torch_xla_available
 from ..callbacks import Callbacks
 from ..loggers import Loggers
+from ..accelerators import AutoAccelerator
 
 
 if is_torch_xla_available():
@@ -72,8 +73,7 @@ class Trainer(ABC):
         self.gradient_clipping_strategy = GradientClippingStrategy(gradient_clipping_strategy)
         self.gradient_clipping_value = gradient_clipping_value
         self.amp = amp
-        self.device = initialize_device(device)
-        self.device_type = DeviceType(self.device.type)
+        self.accelerator = AutoAccelerator(device)
         self.validation_strategy = IntervalStrategy(validation_strategy)
         self.validation_steps = validation_steps
         self.scaler = scaler
@@ -124,8 +124,8 @@ class Trainer(ABC):
 
 
     def context_manager(self):
-        if self.device_type != DeviceType.TPU:
-            manager = torch.autocast(device_type=self.device.type, 
+        if self.accelerator.device_type != DeviceType.TPU:
+            manager = torch.autocast(device_type=self.accelerator.device_type, 
                                      dtype=self.precision_dtype, 
                                      enabled=self.amp)
         else:
@@ -155,7 +155,7 @@ class Trainer(ABC):
         self.validation_loader = validation_loader
         self.return_validation_outputs = return_validation_outputs
 
-        self.model.to(self.device)
+        self.model.to(self.accelerator.device)
         
         if self.validation_strategy == IntervalStrategy.EPOCH:
             self.validation_steps = math.ceil(len(self.train_loader) * self.validation_steps)
@@ -290,7 +290,7 @@ class Trainer(ABC):
         if self.scaler is not None:
             self.scaler.step(self.optimizer)
             self.scaler.update()
-        elif self.device_type == DeviceType.TPU:
+        elif self.accelerator.device_type == DeviceType.TPU:
             xm.optimizer_step(self.optimizer, barrier=True)
         else:
             self.optimizer.step()
@@ -322,7 +322,7 @@ class Trainer(ABC):
                 
     def clip_gradients(self) -> None:
         if self.gradient_clipping_value is not None and self.gradient_clipping_strategy != GradientClippingStrategy.OFF:
-            if self.device_type == DeviceType.TPU:
+            if self.accelerator.device_type == DeviceType.TPU:
                 xm.reduce_gradients(self.optimizer)
 
             if self.scaler is not None:
@@ -338,7 +338,7 @@ class Trainer(ABC):
     def validate(self, loader:DataLoader) -> Tuple[Any, dict]:
         self.validation_loader = loader
 
-        self.model.to(self.device)
+        self.model.to(self.accelerator.device)
         self.model.eval()
         loss, metrics = Averager(), Averager()
         timer = Timer()
@@ -402,7 +402,7 @@ class Trainer(ABC):
 
         self.state = TrainerState.PREDICTION_START
         
-        self.model.to(self.device)
+        self.model.to(self.accelerator.device)
         self.model.eval()   
         for step, batch in enumerate(self.prediction_loader, 1):
             self.history["prediction_step"] = step

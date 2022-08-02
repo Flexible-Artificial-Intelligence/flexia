@@ -8,17 +8,4 @@ if is_pandas_available():
 
 
 class DataFrameLogger(Logger):
-    def __init__(self):
-        pass
-
-    def on_training_start(self, trainer) -> None:
-        pass
-
-    def on_training_step_end(self, trainer) -> None:
-        pass
-
-    def on_validation_end(self, trainer) -> None:
-        pass
-
-    def on_training_end(self, trainer) -> None:
-        pass
+    pass

@@ -31,6 +31,8 @@ class EarlyStopping(Callback):
                  stopping_threshold:Optional[float]=None, 
                  check_finite:bool=False):
         
+        super().__init__()
+
         self.monitor_value = monitor_value
         self.mode = Modes(mode)
         self.delta = delta

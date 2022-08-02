@@ -24,6 +24,7 @@ class PrintLogger(Logger):
                  sep=" - ", 
                  time_format:str="{hours:02d}:{minutes:02d}:{seconds:02d}", 
                  log_accelerator_stats=False) -> None:
+        
         super().__init__()
 
         self.verbose = verbose

@@ -30,7 +30,9 @@ class WANDBLogger(Logger):
                  silent=False, 
                  log_accelerator_stats=False, 
                  **kwargs):
-                 
+
+        super().__init__()     
+            
         self.api_key = api_key
         self.finish = finish
         self.silent = silent

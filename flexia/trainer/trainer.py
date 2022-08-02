@@ -74,6 +74,7 @@ class Trainer(ABC):
         self.gradient_clipping_value = gradient_clipping_value
         self.amp = amp
         self.accelerator = AutoAccelerator(device)
+        self.device = self.accelerator.device
         self.validation_strategy = IntervalStrategy(validation_strategy)
         self.validation_steps = validation_steps
         self.scaler = scaler
@@ -153,7 +154,6 @@ class Trainer(ABC):
         
         self.train_loader = train_loader
         self.validation_loader = validation_loader
-        self.return_validation_outputs = return_validation_outputs
 
         self.model.to(self.accelerator.device)
         
@@ -240,7 +240,7 @@ class Trainer(ABC):
                 if self.validation_loader is not None:
                     if (self.history["step"] % self.validation_steps) == 0:
 
-                        validation_loss, validation_metrics, validation_outputs = self.validate(loader=self.validation_loader)
+                        validation_loss, validation_metrics, validation_outputs = self.validate(loader=self.validation_loader, return_validation_outputs=return_validation_outputs)
 
                         self.scheduling_step(loss=validation_loss, loop="validation")
 
@@ -335,7 +335,7 @@ class Trainer(ABC):
 
 
     @exception_handler
-    def validate(self, loader:DataLoader) -> Tuple[Any, dict]:
+    def validate(self, loader:DataLoader, return_validation_outputs=True) -> Tuple[Any, dict]:
         self.validation_loader = loader
 
         self.model.to(self.accelerator.device)
@@ -378,10 +378,10 @@ class Trainer(ABC):
 
                     self.state = TrainerState.VALIDATION_STEP_END
 
-                    if self.return_validation_outputs:
+                    if return_validation_outputs:
                         outputs.extend(batch_outputs.to("cpu"))
 
-        if self.return_validation_outputs:
+        if return_validation_outputs:
             outputs = torch.stack(outputs, dim=0)
         else:
             outputs = None

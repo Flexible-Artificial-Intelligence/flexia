@@ -1,13 +1,16 @@
-from .accelerator import Accelerator
 from . import *
+from ..utils import initialize_device
+from ..enums import DeviceType
 
 
-class AutoAccelerator(Accelerator):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        
+class AutoAccelerator:
+    def __init__(self, device=None, *args, **kwargs):
+        self.device = initialize_device(device)
+        self.device_type = DeviceType(self.device.type)
+        self.device_index = self.device.index
+
         self.__accelerator_name = f"{self.device_type.name}Accelerator"
-        self.__accelerator = globals()[self.__accelerator_name](*args, **kwargs) # change
+        self.__accelerator = globals()[self.__accelerator_name](device=self.device, *args, **kwargs) 
         
     @property
     def memory(self):

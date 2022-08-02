@@ -10,7 +10,7 @@ class Accelerator(ABC):
     def __init__(self, device, unit="MB"):
         self.device = torch.device(device)
         self.device_type = DeviceType(self.device.type)
-        self.device_index = self.device.index
+        self.device_index = self.device.index if self.device.index is not None else 0
         self.unit = MemoryUnit(unit)
 
     @property

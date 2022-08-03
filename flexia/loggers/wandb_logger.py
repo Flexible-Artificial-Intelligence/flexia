@@ -13,8 +13,6 @@
 # limitations under the License.
 
 
-import os
-
 from .logger import Logger
 from ..import_utils import is_wandb_available
 
@@ -27,15 +25,15 @@ class WANDBLogger(Logger):
     def __init__(self, 
                  api_key=None, 
                  finish=True, 
-                 silent=False, 
                  log_accelerator_stats=False, 
+                 summary_values={},
                  **kwargs):
 
         super().__init__()     
             
         self.api_key = api_key
         self.finish = finish
-        self.silent = silent
+        self.summary_values = summary_values
         self.log_accelerator_stats = log_accelerator_stats
         self.kwargs = kwargs
 

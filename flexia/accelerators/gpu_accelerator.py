@@ -1,12 +1,14 @@
 import torch
-from pynvml import nvmlInit, nvmlDeviceGetHandleByIndex, nvmlDeviceGetMemoryInfo
 
 from .accelerator import Accelerator
 from ..enums import DeviceType
 from .utils import convert_bytes
+from ..import_utils import is_pynvml_available
 
 
-nvmlInit()
+if is_pynvml_available():
+    from pynvml import nvmlInit, nvmlDeviceGetHandleByIndex, nvmlDeviceGetMemoryInfo
+    nvmlInit()
 
 class GPUAccelerator(Accelerator):
     def __init__(self, *args, **kwargs):

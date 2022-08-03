@@ -71,3 +71,15 @@ def is_torch_xla_available() -> bool:
         return True
     except ModuleNotFoundError:
         return False
+
+
+def is_pynvml_available() -> bool:
+    """
+    Checks the availablity of `pynvml` library.    
+    """
+
+    try:
+        import pynvml
+        return True
+    except ModuleNotFoundError:
+        return False

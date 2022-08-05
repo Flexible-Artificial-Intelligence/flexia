@@ -27,12 +27,12 @@ class GPUAccelerator(Accelerator):
     
     @property
     def memory(self):
-        memory = convert_bytes(bytes=self.nvml_info.total, from_unit="KB", to_unit=self.unit)
+        memory = convert_bytes(bytes=self.nvml_info.total, from_unit="B", to_unit=self.unit)
         return memory
         
     @property
     def memory_usage(self):
-        memory_usage = convert_bytes(bytes=self.nvml_info.used, from_unit="KB", to_unit=self.unit)
+        memory_usage = convert_bytes(bytes=self.nvml_info.used, from_unit="B", to_unit=self.unit)
         return memory_usage
 
     @property

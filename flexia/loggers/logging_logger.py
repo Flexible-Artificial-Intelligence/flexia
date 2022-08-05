@@ -50,9 +50,9 @@ class LoggingLogger(Logger):
             accelerator = trainer.accelerator
             accelerator_string = format_accelerator_stats(accelerator=accelerator, 
                                                           sep=self.sep, 
-                                                          add_sep_before=True)
+                                                          add_sep_before=False)
 
-            accelerator_string = f"accelerator: {accelerator_string}"
+            accelerator_string = f"{self.sep}accelerator: {accelerator_string}"
         else:
             accelerator_string = ""
         

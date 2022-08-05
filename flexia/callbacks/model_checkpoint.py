@@ -15,6 +15,7 @@
 
 import os
 import gc
+import re
 import numpy as np
 import torch
 from typing import Union
@@ -99,7 +100,12 @@ class ModelCheckpoint(Callback):
         self.all_candidates = []
         self.all_interval_candidates = []
     
-    
+    @classmethod
+    def check_filename_format_uniqueness(filename_format):
+        regex = '{([^"]*)}'
+        results = re.findall(regex, filename_format)
+
+        return len(results) > 0
     
     def append_candidate(self, candidates_list, path) -> None:   
         """

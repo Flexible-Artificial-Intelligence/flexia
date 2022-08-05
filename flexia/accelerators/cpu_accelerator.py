@@ -12,7 +12,7 @@ class CPUAccelerator(Accelerator):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        self.virtual_memory = psutil.virtual_memory()
+        self.virtual_memory = psutil.virtual_memory() # bytes
         self.__name = self.__get_processor_name()
     
     def __get_processor_name(self):
@@ -36,12 +36,12 @@ class CPUAccelerator(Accelerator):
     
     @property
     def memory(self):
-        memory = convert_bytes(bytes=self.virtual_memory.total, from_unit="KB", to_unit=self.unit)
+        memory = convert_bytes(bytes=self.virtual_memory.total, from_unit="B", to_unit=self.unit)
         return memory
         
     @property
     def memory_usage(self):
-        memory_usage = convert_bytes(bytes=self.virtual_memory.used, from_unit="KB", to_unit=self.unit)
+        memory_usage = convert_bytes(bytes=self.virtual_memory.used, from_unit="B", to_unit=self.unit)
         return memory_usage
 
     @property

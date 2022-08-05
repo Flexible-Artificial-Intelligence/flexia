@@ -63,3 +63,14 @@ def get_time_from_timedelta(delta:timedelta) -> dict:
     time["minutes"], time["seconds"] = divmod(rem, 60)
 
     return time
+
+
+def format_accelerator_stats(accelerator=None, sep=" - ", add_sep_before=False):
+    string = ""
+    if accelerator is not None:
+        data = accelerator.stats
+        data.update({"unit": accelerator.unit.value})
+        string = "{memory_usage:.0f}/{memory:.0f} {unit}".format(**data)
+
+    return string if not add_sep_before else sep + string
+

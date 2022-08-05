@@ -55,6 +55,7 @@ class TQDMLogger(Logger):
         lr = trainer.history["lr"]
         
         metrics_string = format_metrics(metrics=train_metric_epoch, decimals=self.decimals)
+
         string = f"loss: {train_loss_epoch:.{self.decimals}f}{metrics_string}{self.sep}lr: {lr:.{self.decimals}}"
         trainer.train_loader.set_postfix_str(string)
 
@@ -63,6 +64,7 @@ class TQDMLogger(Logger):
         validation_metrics = trainer.history["validation_metrics"]
 
         metrics_string = format_metrics(metrics=validation_metrics, decimals=self.decimals)
+        
         string = f"loss: {validation_loss:.{self.decimals}}{metrics_string}"
         trainer.validation_loader.set_postfix_str(string)
 

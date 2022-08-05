@@ -43,7 +43,7 @@ Flexia is always open to your issues and pull requests!
     - [ ] Add aditionaly saving state dicts.
     - [ ] Multi-values checker.
 - [ ] Early Stopping
-    - [ ] Checks for infinite values during training.
+    - [x] Checks for infinite values during training.
     - [ ] Add logging logger.
     - [ ] Multi-values checker.
 

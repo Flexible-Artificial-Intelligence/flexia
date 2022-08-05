@@ -29,7 +29,8 @@ class EarlyStopping(Callback):
                  delta:Union[float, int]=0.0, 
                  patience:Union[float, int]=5, 
                  stopping_threshold:Optional[float]=None, 
-                 check_finite:bool=False):
+                 check_finite:bool=False, 
+                 check_finite_during_training=False):
         
         super().__init__()
 
@@ -39,6 +40,7 @@ class EarlyStopping(Callback):
         self.patience = patience
         self.stopping_threshold = stopping_threshold
         self.check_finite = check_finite
+        self.check_finite_during_training = check_finite_during_training
         
         self.stop = False
         self.case = None
@@ -62,6 +64,18 @@ class EarlyStopping(Callback):
         if self.stop:
             trainer.state = TrainerState.TRAINING_STOP
             print(self.case)
+
+
+    def on_training_step_end(self, trainer) -> None:
+        if self.check_finite_during_training:
+            train_loss_batch = trainer.history["train_loss_batch"]
+
+            if not np.isfinite(train_loss_batch):
+                self.stop = True
+                self.case = f"The value is not finite, maybe problem of Gradient Exploding."
+
+                trainer.state = TrainerState.TRAINING_STOP
+                print(self.case)
 
     
     def check(self, value) -> bool:               

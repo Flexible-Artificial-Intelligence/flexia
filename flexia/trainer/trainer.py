@@ -28,7 +28,7 @@ from ..timer import Timer
 from ..averager import Averager
 from ..loggers import Logger
 from ..callbacks import Callback
-from ..utils import get_lr, precision_dtypes
+from ..utils import precision_dtypes, seed_everything
 from ..third_party.addict import Dict
 from ..enums import Precision, IntervalStrategy, DeviceType
 from ..hooks.utils import run_hook, exception_handler
@@ -61,7 +61,8 @@ class Trainer(ABC):
                  validation_steps:int=1, 
                  loggers:Optional[List["Logger"]]=None, 
                  epochs:int=1, 
-                 callbacks=Optional[List["Callback"]]) -> None:
+                 callbacks=Optional[List["Callback"]], 
+                 seed=None) -> None:
         
         self.model = model
         self.optimizer = optimizer
@@ -81,6 +82,7 @@ class Trainer(ABC):
         self.epochs = epochs
         self.loggers = loggers
         self.callbacks = callbacks
+        self.seed = seed
 
         self.loggers =  self.loggers if self.loggers is not None else []
         self.loggers = Loggers(self.loggers)
@@ -109,6 +111,9 @@ class Trainer(ABC):
             self.scaler = GradScaler()
         else:
             self.scaler = None
+
+        if self.seed is not None:
+            self.seed = seed_everything(seed=self.seed)
 
 
         self.history = Dict({
@@ -445,6 +450,10 @@ class Trainer(ABC):
         Called when the validation loop ends.
         """
 
+        pass
+
+
+    def load_arguments_from_dictionary(self, dictionary):
         pass
 
     # Aliases

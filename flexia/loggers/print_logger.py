@@ -72,7 +72,7 @@ class PrintLogger(Logger):
                   f"remain: {remain}{self.sep}"
                   f"loss: {train_loss_epoch:.{self.decimals}f}"
                   f"{metrics_string}{self.sep}"
-                  f"lr: {lr:.{self.decimals}f} "
+                  f"lr: {lr:.{self.decimals}f}"
                   f"{accelerator_string}")
 
 
@@ -96,7 +96,7 @@ class PrintLogger(Logger):
                   f"elapsed: {elapsed}{self.sep}"
                   f"remain: {remain}{self.sep}"
                   f"loss: {loss:.{self.decimals}f}"
-                  f"{metrics_string} "
+                  f"{metrics_string}"
                   f"{accelerator_string}")
 
 
@@ -114,5 +114,5 @@ class PrintLogger(Logger):
             print(f"[Prediction] " 
                   f"step: {step:{steps_margin}d}/{steps:{steps_margin}d}{self.sep}"
                   f"elapsed: {elapsed}{self.sep}"
-                  f"remain: {remain} "
+                  f"remain: {remain}"
                   f"{accelerator_string}")

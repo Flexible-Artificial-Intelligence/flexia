@@ -222,7 +222,7 @@ def __get_from_library(library, name, parameters, **kwargs):
     return instance
 
 
-def get_scheduler(optimizer:Optimizer, name:str="LinearLR", parameters:dict={}, library="torch") -> _LRScheduler:
+def get_scheduler(optimizer:Optimizer, name:str, parameters:dict={}, library="torch", *args, **kwargs) -> _LRScheduler:
     """
     Returns instance of scheduler.
 
@@ -257,7 +257,38 @@ def get_scheduler(optimizer:Optimizer, name:str="LinearLR", parameters:dict={}, 
     return scheduler
 
 
-def get_optimizer(model_parameters:Any, name:str="AdamW", parameters:dict={}, library:str="torch") -> Optimizer:
+def get_transformers_scheduler(optimizer:Optimizer, 
+                               name:str,
+                               num_training_steps:int,  
+                               parameters:dict={}, 
+                               warmup:Union[float, int]=0.0, 
+                               gradient_accumulation_steps:int=1):
+
+    if is_transformers_available():
+        # number of training steps relatively on gradient accumulation steps
+        num_training_steps = num_training_steps // gradient_accumulation_steps
+
+        # ratio of warmup steps
+        if 0 <= warmup <= 1:
+            num_warmup_steps = int(num_training_steps * warmup)
+        
+        # updating parameters dictionary with new defined parameters
+        parameters.update({
+            "num_training_steps": num_training_steps, 
+            "num_warmup_steps": num_warmup_steps
+        })
+
+        # getting scheduler from `transformers` library
+        module = transformers
+        scheduler = __get_from_library(library=module, name=name, parameters=parameters, optimizer=optimizer)
+
+        return scheduler
+    else:
+        raise ValueError(f"Library `transformers` is not found.")
+
+
+
+def get_optimizer(model_parameters:Any, name:str, parameters:dict={}, library:str="torch") -> Optimizer:
     """
     Returns instance of optimizer.
 

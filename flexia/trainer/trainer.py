@@ -28,7 +28,7 @@ from ..timer import Timer
 from ..averager import Averager
 from ..loggers import Logger
 from ..callbacks import Callback
-from ..utils import precision_dtypes, seed_everything
+from ..utils import get_lr, precision_dtypes, seed_everything
 from ..third_party.addict import Dict
 from ..enums import Precision, IntervalStrategy, DeviceType
 from ..hooks.utils import run_hook, exception_handler

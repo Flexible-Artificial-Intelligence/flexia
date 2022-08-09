@@ -5,10 +5,67 @@ References
 """
 
 import numpy as np
-from typing import List, Tuple, Optional, Any
+from typing import List, Tuple, Optional, Any, Union, Dict
 
 
 # TAGGING
+def generate_entity2id(entities:List[str], 
+                       inside_token:str="I-",
+                       outside_token:str="O", 
+                       beginning_token:Optional[str]=None, 
+                       ending_token:Optional[str]=None,
+                       single_token:Optional[str]=None,
+                       sort:bool=False, 
+                       return_id2entity:bool=False
+                       ) -> Union[Dict[str, int], Tuple[Dict[str, int], Dict[int, str]]]:
+    
+    if sort:
+        entities = sorted(entities)
+    
+    entity2id = {}
+    entity_format = "{token}{entity}"
+
+    index = 0
+    for entity in entities:
+        # Beginning token
+        if beginning_token is not None:
+            beginning_entity = entity_format.format(token=beginning_token, entity=entity)
+            entity2id[beginning_entity] = index
+            index += 1
+        
+        # Inside token
+        inside_entity = entity_format.format(token=inside_token, entity=entity)
+        entity2id[inside_entity] = index
+        index += 1
+
+        # Ending token
+        if ending_token is not None:
+            ending_entity = entity_format.format(token=ending_token, entity=entity)
+            entity2id[ending_entity] = index
+            index += 1
+
+        # Single token
+        if single_token is not None:
+            single_entity = entity_format.format(token=single_entity, entity=entity)
+            entity2id[single_entity] = index
+            index += 1
+
+    # Outside token
+    entity2id[outside_token] = len(entity2id)
+    
+    # Converting entity2id to id2entity
+    if return_id2entity:
+        id2entity = {id_: label for label, id_ in entity2id.items()}
+        return entity2id, id2entity
+    
+    return entity2id
+
+
+generate_bio_entity2id = lambda *args, **kwargs: generate_entity2id(beginning_token="B-", 
+                                                                    *args, 
+                                                                    **kwargs)
+
+
 def generate_bio_tagging(entities:List[str], 
                          spans:List[List[int]], 
                          offset_mapping:List[Tuple[int, int]],

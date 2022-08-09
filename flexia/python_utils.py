@@ -2,6 +2,14 @@ import os
 import shutil
 
 
+
+def read_file(path:str, mode:str="r"):
+    with open(path, mode) as file:
+        data = file.read()
+
+    return data
+
+
 def make_directory(directory, overwriting=False):
     """
     Makes directory

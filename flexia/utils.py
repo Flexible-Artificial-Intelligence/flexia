@@ -14,12 +14,12 @@
 
 
 import torch
-from torch import device, nn, optim
+from torch import nn, optim
 from torch.optim import Optimizer, lr_scheduler
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
-from typing import Any, Union, Optional
+from typing import Any, Union, Optional, List, Union, Tuple, Dict
 import random
 import os
 
@@ -89,23 +89,54 @@ def seed_everything(seed:Optional[int]=None) -> int:
     return seed
     
 
-def get_lr(optimizer:Optimizer, only_last:bool=False, key="lr") -> Union[int, list]:
+def get_lr(optimizer:Optimizer, only_last_group:bool=False, key:str="lr") -> Union[List[float], float]:
     """
-    Returns optimizer's leearning rates for each group.
+    Returns optimizer's learning rates for each or last group.
     """
 
     if not isinstance(optimizer, Optimizer):
         raise TypeError(f"The given `optimizer` type is not supported, it must be instance of Optimizer.")
     
-    lrs = []
-    for param_group in optimizer.param_groups:
-        if key not in param_group:
-            key = "lr"
+    param_groups = optimizer.param_groups
+    lrs = [param_group[key] for param_group in param_groups]        
+    return lrs[-1] if only_last_group else lrs
+
+
+def get_stepped_lrs(optimizer:Optimizer, 
+                    scheduler:Optional[_LRScheduler]=None, 
+                    steps:int=10, 
+                    steps_start:int=1,
+                    return_as_dict:bool=False,
+                    return_steps_list:bool=False,
+                    only_last_group:bool=False, 
+                    key:str="lr"
+                    ) -> Union[List[float], Dict[int, List[float]], Tuple[List[int]], Union[List[List[float]], Dict[int, List[float]]]]:
+    
+    steps = range(0+steps_start, steps+steps_start)
+    
+    param_groups = optimizer.param_groups
+    num_param_groups = len(param_groups)
+    
+    groups_lrs = [[]]*num_param_groups
+    for step in steps:
+        groups_lr = get_lr(optimizer)
         
-        lr = param_group[key]
-        lrs.append(lr)
+        for group_index, group_lr in enumerate(groups_lr):
+            groups_lrs[group_index].append(group_lr)
+            
+        optimizer.step()
         
-    return lrs[-1] if only_last else lrs
+        if scheduler is not None:
+            scheduler.step()
+            
+    if only_last_group:
+        return groups_lrs[-1]
+    
+    if return_as_dict:
+        groups_lrs = {group_index: group_lrs for group_index, group_lrs in enumerate(groups_lrs)}
+    
+    if return_steps_list:
+        return steps, groups_lrs
 
 
 def load_checkpoint(path:str, 

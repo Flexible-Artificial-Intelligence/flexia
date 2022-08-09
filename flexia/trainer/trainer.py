@@ -282,7 +282,7 @@ class Trainer(ABC):
         self.history.update(new_data_dict)
 
     def get_lr(self):
-        return get_lr(optimizer=self.optimizer, only_last=True, key="lr")
+        return get_lr(optimizer=self.optimizer, only_last_group=True, key="lr")
 
     def backward_step(self, loss:torch.Tensor) -> torch.Tensor:
         if self.scaler is not None:

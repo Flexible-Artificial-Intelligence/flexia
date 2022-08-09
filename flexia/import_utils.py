@@ -83,3 +83,37 @@ def is_pynvml_available() -> bool:
         return True
     except ModuleNotFoundError:
         return False
+
+
+def is_spacy_available() -> bool:
+    """
+    Checks the availablity of `spacy` library.    
+    """
+
+    try:
+        import spacy
+        return True
+    except ModuleNotFoundError:
+        return False
+
+def is_matplotlib_available() -> bool:
+    """
+    Checks the availablity of `matplotlib` library.    
+    """
+
+    try:
+        import matplotlib
+        return True
+    except ModuleNotFoundError:
+        return False
+
+def is_seaborn_available() -> bool:
+    """
+    Checks the availablity of `seaborn` library.    
+    """
+
+    try:
+        import seaborn
+        return True
+    except ModuleNotFoundError:
+        return False

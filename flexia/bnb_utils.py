@@ -29,8 +29,7 @@ def set_layer_optim_bits(model:nn.Module, optim_bits:int=32, layer:nn.Module=nn.
         model:nn.Module - model with certain layer to override keeping bits.
         optim_bits:int - optimizer's bits for layer. Default: 32.
         layer:nn.Module - layer to change optimizer's bits. Default: nn.Embedding
-
-    
+        
     """
     
     for module in model.modules():

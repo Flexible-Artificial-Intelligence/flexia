@@ -25,6 +25,7 @@ import os
 
 
 from .import_utils import is_transformers_available, is_bitsandbytes_available, is_torch_xla_available
+from .bnb_utils import set_layer_optim_bits
 from .enums import SchedulerLibrary, OptimizerLibrary, DeviceType
 
 
@@ -323,7 +324,6 @@ def get_transformers_scheduler(optimizer:Optimizer,
         raise ValueError(f"Library `transformers` is not found.")
 
 
-
 def get_optimizer(model_parameters:Any, name:str, parameters:dict={}, library:str="torch") -> Optimizer:
     """
     Returns instance of optimizer.
@@ -365,6 +365,25 @@ def get_optimizer(model_parameters:Any, name:str, parameters:dict={}, library:st
     return optimizer
 
 
+def get_bitsandbytes_optimizer(model:nn.Module, 
+                               name:str,
+                               model_parameters=None,  
+                               parameters:dict={}, 
+                               layers_optim_bits=[32], 
+                               layers=[nn.Embedding]):
+
+    if model_parameters is None:
+        model_parameters = model.parameters()
+
+    optimizer = get_optimizer(model_parameters=model_parameters, 
+                              name=name, 
+                              parameters=parameters, 
+                              library="bitsandbytes")
+
+    for layer, layer_optim_bits in zip(layers, layers_optim_bits):
+        set_layer_optim_bits(model=model, optim_bits=layer_optim_bits, layer=layer)
+
+    return optimizer
 
 def freeze_module(module:nn.Module, verbose=False) -> None:
     """

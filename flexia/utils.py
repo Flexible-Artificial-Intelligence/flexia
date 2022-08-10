@@ -391,13 +391,11 @@ def get_freezed_module_parameters(module:nn.Module) -> list:
     return freezed_parameters
 
 
-def move_model_to_eval_mode(model, use_amp=False):
+def move_model_to_eval_mode(model, move_to_half_type=False):
     model.eval()
 
-    if use_amp:
+    if move_to_half_type:
         model.half()
-
-    return model
 
 
 def is_cuda_available():

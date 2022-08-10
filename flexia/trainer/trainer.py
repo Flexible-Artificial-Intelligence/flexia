@@ -29,7 +29,7 @@ from ..timer import Timer
 from ..averager import Averager
 from ..loggers import Logger
 from ..callbacks import Callback
-from ..utils import get_lr, precision_dtypes, seed_everything, mixed_precision_dtypes, move_model_to_eval_mode
+from ..utils import get_lr, precision_dtypes, seed_everything, mixed_precision_dtypes
 from ..third_party.addict import Dict
 from ..enums import Precision, IntervalStrategy, DeviceType
 from ..hooks.utils import run_hook, exception_handler
@@ -356,7 +356,7 @@ class Trainer(ABC):
 
         model = self.model
         model.to(self.accelerator.device)
-        model = move_model_to_eval_mode(model, use_amp=self.use_amp)
+        model.eval()
 
         loss, metrics = Averager(), Averager()
         timer = Timer()
@@ -421,7 +421,7 @@ class Trainer(ABC):
         
         model = self.model
         model.to(self.accelerator.device)
-        model = move_model_to_eval_mode(model, use_amp=self.use_amp)
+        model.eval()
 
         for step, batch in enumerate(self.prediction_loader, 1):
             self.history["prediction_step"] = step

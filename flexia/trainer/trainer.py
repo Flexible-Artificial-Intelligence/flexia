@@ -341,8 +341,11 @@ class Trainer(ABC):
             if self.scaler is not None and self.use_amp and self.gradient_scaling:
                 self.scaler.unscale_(self.optimizer)
             
+            # gradient clipping by norm
             if self.gradient_clipping_strategy == GradientClippingStrategy.NORM:
                 nn.utils.clip_grad_norm_(parameters=model.parameters(), max_norm=self.gradient_clipping_value)
+
+            # gradient clipping by value
             elif self.gradient_clipping_strategy == GradientClippingStrategy.VALUE:
                 nn.utils.clip_grad_norm_(parameters=model.parameters(), clip_value=self.gradient_clipping_value)
 
@@ -353,7 +356,7 @@ class Trainer(ABC):
 
         model = self.model
         model.to(self.accelerator.device)
-        move_model_to_eval_mode(model, use_amp=self.use_amp)
+        model = move_model_to_eval_mode(model, use_amp=self.use_amp)
 
         loss, metrics = Averager(), Averager()
         timer = Timer()
@@ -418,7 +421,7 @@ class Trainer(ABC):
         
         model = self.model
         model.to(self.accelerator.device)
-        move_model_to_eval_mode(model, use_amp=self.use_amp)
+        model = move_model_to_eval_mode(model, use_amp=self.use_amp)
 
         for step, batch in enumerate(self.prediction_loader, 1):
             self.history["prediction_step"] = step

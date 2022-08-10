@@ -397,6 +397,8 @@ def move_model_to_eval_mode(model, use_amp=False):
     if use_amp:
         model.half()
 
+    return model
+
 
 def is_cuda_available():
     return torch.cuda.is_available()

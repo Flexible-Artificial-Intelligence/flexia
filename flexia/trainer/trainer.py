@@ -288,7 +288,7 @@ class Trainer(ABC):
         return get_lr(optimizer=self.optimizer, only_last_group=True, key="lr")
 
     def backward_step(self, loss:torch.Tensor) -> torch.Tensor:
-        if self.scaler is not None and self.use_amp and self.self.gradient_scaling:
+        if self.scaler is not None and self.use_amp and self.gradient_scaling:
             self.scaler.scale(loss).backward()
         else:
             loss.backward()

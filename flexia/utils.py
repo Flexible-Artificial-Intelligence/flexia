@@ -391,6 +391,13 @@ def get_freezed_module_parameters(module:nn.Module) -> list:
     return freezed_parameters
 
 
+def move_model_to_eval_mode(model, use_amp=False):
+    model.eval()
+
+    if use_amp:
+        model.half()
+
+
 def is_cuda_available():
     return torch.cuda.is_available()
 

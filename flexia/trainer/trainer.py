@@ -29,7 +29,7 @@ from ..timer import Timer
 from ..averager import Averager
 from ..loggers import Logger
 from ..callbacks import Callback
-from ..utils import get_lr, precision_dtypes, seed_everything
+from ..utils import get_lr, precision_dtypes, seed_everything, mixed_precision_dtypes
 from ..third_party.addict import Dict
 from ..enums import Precision, IntervalStrategy, DeviceType
 from ..hooks.utils import run_hook, exception_handler
@@ -43,6 +43,9 @@ if is_torch_xla_available():
     import torch_xla.core.xla_model as xm
 
 
+# enabling garbage collection
+gc.enable()
+
 
 class Trainer(ABC):
     def __init__(self, 
@@ -54,7 +57,6 @@ class Trainer(ABC):
                  gradient_scaling:bool=False, 
                  scaler:Optional["GradScaler"]=None,
                  precision="fp32",
-                 amp=False,
                  gradient_clipping_strategy="off",
                  gradient_clipping_value:float=None, 
                  device:Optional[Union[str, torch.device]]="cpu", 
@@ -75,7 +77,6 @@ class Trainer(ABC):
         self.precision = Precision(precision)
         self.gradient_clipping_strategy = GradientClippingStrategy(gradient_clipping_strategy)
         self.gradient_clipping_value = gradient_clipping_value
-        self.amp = amp
         self.accelerator = AutoAccelerator(device)
         self.device = self.accelerator.device
         self.validation_strategy = IntervalStrategy(validation_strategy)
@@ -107,9 +108,11 @@ class Trainer(ABC):
         assert isinstance(self.gradient_accumulation_steps, int), f"`gradient_accumulation_steps` must be integer type, but given `{type(self.gradient_accumulation_steps)}`"
 
         self.precision_dtype = precision_dtypes[self.precision.value]
+        self.use_amp = self.precision.value in mixed_precision_dtypes
 
-        if self.gradient_scaling and self.scaler is None and self.amp:
-            self.scaler = GradScaler()
+        if self.gradient_scaling and self.use_amp:
+            if self.scaler is None:
+                self.scaler = GradScaler()
         else:
             self.scaler = None
 
@@ -134,7 +137,7 @@ class Trainer(ABC):
         if self.accelerator.device_type != DeviceType.TPU:
             manager = torch.autocast(device_type=self.accelerator.device_type.value, 
                                      dtype=self.precision_dtype, 
-                                     enabled=self.amp)
+                                     enabled=self.use_amp)
         else:
             manager = contextlib.nullcontext()
 
@@ -285,7 +288,7 @@ class Trainer(ABC):
         return get_lr(optimizer=self.optimizer, only_last_group=True, key="lr")
 
     def backward_step(self, loss:torch.Tensor) -> torch.Tensor:
-        if self.scaler is not None:
+        if self.scaler is not None and self.use_amp and self.self.gradient_scaling:
             self.scaler.scale(loss).backward()
         else:
             loss.backward()
@@ -296,7 +299,7 @@ class Trainer(ABC):
     def optimization_step(self) -> None:     
         self.clip_gradients()
 
-        if self.scaler is not None:
+        if self.scaler is not None and self.use_amp and self.gradient_scaling:
             self.scaler.step(self.optimizer)
             self.scaler.update()
         elif self.accelerator.device_type == DeviceType.TPU:
@@ -334,7 +337,7 @@ class Trainer(ABC):
             if self.accelerator.device_type == DeviceType.TPU:
                 xm.reduce_gradients(self.optimizer)
 
-            if self.scaler is not None:
+            if self.scaler is not None and self.use_amp and self.gradient_scaling:
                 self.scaler.unscale_(self.optimizer)
             
             if self.gradient_clipping_strategy == GradientClippingStrategy.NORM:
@@ -348,7 +351,7 @@ class Trainer(ABC):
         self.validation_loader = loader
 
         self.model.to(self.accelerator.device)
-        self.model.eval()
+        self.__move_model_to_eval_mode()
 
         loss, metrics = Averager(), Averager()
         timer = Timer()
@@ -402,6 +405,12 @@ class Trainer(ABC):
         return (loss.average, metrics.average, outputs)
 
 
+    def __move_model_to_eval_mode(self):
+        self.model.eval()
+
+        if self.use_amp:
+            self.model.half()
+
     @exception_handler
     def predict(self, loader:DataLoader, torchscript=False):
         self.prediction_loader = loader      
@@ -413,7 +422,8 @@ class Trainer(ABC):
         self.state = TrainerState.PREDICTION_START
         
         self.model.to(self.accelerator.device)
-        self.model.eval()   
+        self.__move_model_to_eval_mode()
+
         for step, batch in enumerate(self.prediction_loader, 1):
             self.history["prediction_step"] = step
             

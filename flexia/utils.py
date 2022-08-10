@@ -45,6 +45,8 @@ precision_dtypes = {
     "bf16": torch.bfloat16,
 }
 
+mixed_precision_dtypes = ("fp16", "bf16")
+
 
 def initialize_device(device=None):
     if device is None:

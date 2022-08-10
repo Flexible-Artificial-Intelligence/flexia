@@ -6,6 +6,7 @@ import re
 
 from .accelerator import Accelerator
 from .utils import convert_bytes
+from ..utils import is_cpu_available
 
 
 class CPUAccelerator(Accelerator):
@@ -50,4 +51,4 @@ class CPUAccelerator(Accelerator):
 
     @staticmethod
     def is_available():
-        return os.cpu_count() > 0
+        return is_cpu_available()

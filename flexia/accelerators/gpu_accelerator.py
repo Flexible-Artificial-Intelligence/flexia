@@ -4,7 +4,7 @@ from .accelerator import Accelerator
 from ..enums import DeviceType
 from .utils import convert_bytes
 from ..import_utils import is_pynvml_available
-
+from ..utils import is_cuda_available
 
 if is_pynvml_available():
     from pynvml import nvmlInit, nvmlDeviceGetHandleByIndex, nvmlDeviceGetMemoryInfo
@@ -41,4 +41,4 @@ class GPUAccelerator(Accelerator):
 
     @staticmethod
     def is_available():
-        return torch.cuda.is_available()
+        return is_cuda_available()

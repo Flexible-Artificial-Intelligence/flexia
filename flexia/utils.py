@@ -53,11 +53,11 @@ def initialize_device(device=None):
         if is_cuda_available():
             device = torch.device("cuda:0")
         elif is_tpu_available():
-            device = xm.xla_device(n=1)
+            device = xm.xla_device(n=0)
         elif is_mps_available():
             device = torch.device("mps:0")
         else:
-            device = torch.device("cpu")
+            device = torch.device("cpu:0")
 
     device = torch.device(device)
 
@@ -401,6 +401,8 @@ def move_model_to_eval_mode(model, move_to_half_type=False):
 def is_cuda_available():
     return torch.cuda.is_available()
 
+def is_cpu_available():
+    return os.cpu_count() > 0
 
 def is_tpu_available():
     if is_torch_xla_available():
@@ -409,6 +411,5 @@ def is_tpu_available():
     else:
         return False
         
-
 def is_mps_available():
     return torch.backends.mps.is_available()

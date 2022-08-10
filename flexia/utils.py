@@ -129,14 +129,17 @@ def get_stepped_lrs(optimizer:Optimizer,
         if scheduler is not None:
             scheduler.step()
             
-    if only_last_group:
-        return groups_lrs[-1]
     
     if return_as_dict:
         groups_lrs = {group_index: group_lrs for group_index, group_lrs in enumerate(groups_lrs)}
-    
+        
+    if only_last_group:
+        groups_lrs = groups_lrs[-1]
+        
     if return_steps_list:
         return steps, groups_lrs
+    
+    return groups_lrs
 
 
 def load_checkpoint(path:str, 

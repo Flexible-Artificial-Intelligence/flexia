@@ -317,10 +317,10 @@ class Trainer(ABC):
                     self.scheduler.step()
 
                     
-    def train_one_step(self, model, batch:Any) -> Tuple[torch.Tensor, dict]:
+    def train_one_step(self, batch:Any) -> Tuple[torch.Tensor, dict]:
         self.model.train()
         with self.context_manager():
-            batch_loss, batch_metrics, batch_outputs = self.training_step(model=model, batch=batch)
+            batch_loss, batch_metrics, batch_outputs = self.training_step(batch=batch)
 
             if self.gradient_accumulation_steps > 1:
                 batch_loss /= self.gradient_accumulation_steps
@@ -347,9 +347,8 @@ class Trainer(ABC):
     def validate(self, loader:DataLoader, return_validation_outputs=True, torchscript=False) -> Tuple[Any, dict]:
         self.validation_loader = loader
 
-        model = self.model
-        model.to(self.accelerator.device)
-        model.eval()
+        self.model.to(self.accelerator.device)
+        self.model.eval()
 
         loss, metrics = Averager(), Averager()
         timer = Timer()
@@ -366,7 +365,7 @@ class Trainer(ABC):
 
                     self.state = TrainerState.VALIDATION_STEP_START
 
-                    batch_loss, batch_metrics, batch_outputs = self.training_step(model=self.model, batch=batch)
+                    batch_loss, batch_metrics, batch_outputs = self.training_step(batch=batch)
 
                     loss.update(batch_loss.item(), n=batch_size)
                     metrics.update(batch_metrics, n=batch_size)
@@ -443,11 +442,11 @@ class Trainer(ABC):
 
 
     @abstractmethod
-    def training_step(self, model, batch):
+    def training_step(self, batch):
         pass
 
     @abstractmethod
-    def prediction_step(self, model, batch:Any):
+    def prediction_step(self, batch:Any):
         pass
 
 

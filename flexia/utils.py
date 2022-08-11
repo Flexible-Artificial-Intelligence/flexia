@@ -307,6 +307,8 @@ def get_transformers_scheduler(optimizer:Optimizer,
         # ratio of warmup steps
         if 0 <= warmup <= 1:
             num_warmup_steps = int(num_training_steps * warmup)
+        else:
+            num_warmup_steps = warmup
         
         # updating parameters dictionary with new defined parameters
         parameters.update({

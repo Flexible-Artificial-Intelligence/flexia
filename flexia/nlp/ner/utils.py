@@ -67,11 +67,11 @@ generate_bio_entity2id = lambda *args, **kwargs: generate_entity2id(beginning_to
 
 
 
-def convert_entities2ids(entities, entity2id):
+def convert_entities_to_ids(entities, entity2id):
     return [entity2id[entity] for entity in entities]
 
 
-def convert_ids2entities(ids, id2entity):
+def convert_ids_to_entities(ids, id2entity):
     return [id2entity[id_] for id_ in ids]
 
 

@@ -25,7 +25,10 @@ def generate_entity2id(entities:List[str],
     entity2id = {}
     entity_format = "{token}{entity}"
 
-    index = 0
+    # Outside token
+    entity2id[outside_token] = 0
+
+    index = 1
     for entity in entities:
         # Beginning token
         if beginning_token is not None:
@@ -49,9 +52,6 @@ def generate_entity2id(entities:List[str],
             single_entity = entity_format.format(token=single_entity, entity=entity)
             entity2id[single_entity] = index
             index += 1
-
-    # Outside token
-    entity2id[outside_token] = len(entity2id)
     
     # Converting entity2id to id2entity
     if return_id2entity:

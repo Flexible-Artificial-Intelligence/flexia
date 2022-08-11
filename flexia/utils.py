@@ -39,7 +39,6 @@ if is_bitsandbytes_available():
     import bitsandbytes as bnb
 
 
-
 precision_dtypes = {
     "fp32": torch.float32,
     "fp16": torch.float16,
@@ -370,7 +369,8 @@ def get_bitsandbytes_optimizer(model:nn.Module,
                                model_parameters=None,  
                                parameters:dict={}, 
                                layers_optim_bits=[32], 
-                               layers=[nn.Embedding]):
+                               layers=[nn.Embedding], 
+                               verbose=False):
 
     if model_parameters is None:
         model_parameters = model.parameters()
@@ -383,38 +383,10 @@ def get_bitsandbytes_optimizer(model:nn.Module,
     for layer, layer_optim_bits in zip(layers, layers_optim_bits):
         set_layer_optim_bits(model=model, optim_bits=layer_optim_bits, layer=layer)
 
-    return optimizer
-
-def freeze_module(module:nn.Module, verbose=False) -> None:
-    """
-    Freezes module's parameters.
-    """
-    
-    for name, parameter in module.named_parameters():
-        parameter.requires_grad = False
-
         if verbose:
-            print(f"Parameter `{name}` was freezed.")
-        
-        
-def get_freezed_module_parameters(module:nn.Module) -> list:
-    """
-    Returns names of freezed parameters of the given module.
-    """
-    
-    freezed_parameters = []
-    for name, parameter in module.named_parameters():
-        if not parameter.requires_grad:
-            freezed_parameters.append(name)
-            
-    return freezed_parameters
+            print(f"Changed precision of {layer} to {layer_optim_bits}.")
 
-
-def move_model_to_eval_mode(model, move_to_half_type=False):
-    model.eval()
-
-    if move_to_half_type:
-        model.half()
+    return optimizer
 
 
 def is_cuda_available():

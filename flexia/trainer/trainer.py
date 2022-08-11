@@ -351,6 +351,7 @@ class Trainer(ABC):
 
 
     @exception_handler
+    @torch.no_grad()
     def validate(self, loader:DataLoader, return_validation_outputs=True, torchscript=False) -> Tuple[Any, dict]:
         self.validation_loader = loader
 
@@ -367,42 +368,43 @@ class Trainer(ABC):
         self.state = TrainerState.VALIDATION_START
 
         for step, batch in enumerate(self.validation_loader, 1):
-            with torch.no_grad():
-                with self.context_manager():
-                    batch_size = len(batch)
+            with self.context_manager():
+                batch_size = len(batch)
 
-                    self.state = TrainerState.VALIDATION_STEP_START
+                self.state = TrainerState.VALIDATION_STEP_START
 
-                    batch_loss, batch_metrics, batch_outputs = self.training_step(model=model, batch=batch)
+                batch_loss, batch_metrics, batch_outputs = self.training_step(model=model, batch=batch)
 
-                    loss.update(batch_loss.item(), n=batch_size)
-                    metrics.update(batch_metrics, n=batch_size)
+                loss.update(batch_loss.item(), n=batch_size)
+                metrics.update(batch_metrics, n=batch_size)
 
-                    elapsed, remain = timer(step/steps)
+                elapsed, remain = timer(step/steps)
 
-                    self.history.update({
-                        "validation_step": step,
-                        "validation_elapsed": elapsed,
-                        "validation_remain": remain,
-                        "validation_loss": loss.average,
-                        "validation_loss_batch": batch_loss.item(),
-                        "validation_metrics": metrics.average,
-                        "validation_metrics_batch": batch_metrics,
-                    })
+                self.history.update({
+                    "validation_step": step,
+                    "validation_elapsed": elapsed,
+                    "validation_remain": remain,
+                    "validation_loss": loss.average,
+                    "validation_loss_batch": batch_loss.item(),
+                    "validation_metrics": metrics.average,
+                    "validation_metrics_batch": batch_metrics,
+                })
 
                     
-                    self.__update_history_data(data=metrics.average, key_format="validation_{key}")
-                    self.__update_history_data(data=batch_metrics, key_format="validation_{key}_batch")
+                self.__update_history_data(data=metrics.average, key_format="validation_{key}")
+                self.__update_history_data(data=batch_metrics, key_format="validation_{key}_batch")
 
-                    self.state = TrainerState.VALIDATION_STEP_END
+                self.state = TrainerState.VALIDATION_STEP_END
 
-                    if return_validation_outputs:
-                        outputs.extend(batch_outputs.to("cpu"))
+                if return_validation_outputs:
+                    outputs.extend(batch_outputs.to("cpu"))
 
         if return_validation_outputs:
             outputs = torch.stack(outputs, dim=0)
         else:
             outputs = None
+
+        gc.collect()
 
         self.on_validation_end(outputs=outputs)
         self.state = TrainerState.VALIDATION_END
@@ -410,6 +412,7 @@ class Trainer(ABC):
         return (loss.average, metrics.average, outputs)
     
     @exception_handler
+    @torch.no_grad()
     def predict(self, loader:DataLoader, torchscript=False):
         self.prediction_loader = loader      
         steps = len(self.prediction_loader)
@@ -426,26 +429,27 @@ class Trainer(ABC):
         for step, batch in enumerate(self.prediction_loader, 1):
             self.history["prediction_step"] = step
             
-            with torch.no_grad():
-                with self.context_manager():
-                    self.state = TrainerState.PREDICTION_STEP_START
+            with self.context_manager():
+                self.state = TrainerState.PREDICTION_STEP_START
 
-                    batch_outputs = self.prediction_step(model=model, batch=batch)
+                batch_outputs = self.prediction_step(model=model, batch=batch)
 
-                    elapsed, remain = timer(self.history["prediction_step"]/self.history["prediction_steps"])
-                    self.history.update({
-                        "prediction_elapsed": elapsed,
-                        "prediction_remain": remain,
-                    })
+                elapsed, remain = timer(self.history["prediction_step"]/self.history["prediction_steps"])
+                self.history.update({
+                    "prediction_elapsed": elapsed,
+                    "prediction_remain": remain,
+                })
                     
-                    self.state = TrainerState.PREDICTION_STEP_END
+                self.state = TrainerState.PREDICTION_STEP_END
 
-                    batch_outputs = batch_outputs.to("cpu")
-                    outputs.extend(batch_outputs)
+                batch_outputs = batch_outputs.to("cpu")
+                outputs.extend(batch_outputs)
                     
         self.state = TrainerState.PREDICTION_END
 
         outputs = torch.stack(outputs, dim=0)
+
+        gc.collect()
     
         return outputs
 

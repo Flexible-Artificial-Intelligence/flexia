@@ -107,6 +107,7 @@ def is_matplotlib_available() -> bool:
     except ModuleNotFoundError:
         return False
 
+
 def is_seaborn_available() -> bool:
     """
     Checks the availablity of `seaborn` library.    
@@ -114,6 +115,18 @@ def is_seaborn_available() -> bool:
 
     try:
         import seaborn
+        return True
+    except ModuleNotFoundError:
+        return False
+
+
+def is_apex_available() -> bool:
+    """
+    Checks the availablity of `apex` library.    
+    """
+
+    try:
+        import apex
         return True
     except ModuleNotFoundError:
         return False

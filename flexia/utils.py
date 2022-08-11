@@ -24,7 +24,7 @@ import random
 import os
 
 
-from .import_utils import is_transformers_available, is_bitsandbytes_available, is_torch_xla_available
+from .import_utils import is_transformers_available, is_bitsandbytes_available, is_torch_xla_available, is_torch_backend_mps_available
 from .bnb_utils import set_layer_optim_bits
 from .enums import SchedulerLibrary, OptimizerLibrary, DeviceType
 
@@ -403,4 +403,7 @@ def is_tpu_available():
         return False
         
 def is_mps_available():
-    return torch.backends.mps.is_available()
+    if is_torch_backend_mps_available():
+        return torch.backends.mps.is_available()
+    
+    return False

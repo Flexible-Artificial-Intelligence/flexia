@@ -66,6 +66,15 @@ generate_bio_entity2id = lambda *args, **kwargs: generate_entity2id(beginning_to
                                                                     **kwargs)
 
 
+
+def convert_entities2ids(entities, entity2id):
+    return [entity2id[entity] for entity in entities]
+
+
+def convert_ids2entities(ids, id2entity):
+    return [id2entity[id_] for id_ in ids]
+
+
 def generate_bio_tagging(entities:List[str], 
                          spans:List[List[int]], 
                          offset_mapping:List[Tuple[int, int]],

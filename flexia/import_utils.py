@@ -130,3 +130,14 @@ def is_apex_available() -> bool:
         return True
     except ModuleNotFoundError:
         return False
+
+def is_torch_backend_mps_available() -> bool:
+    """
+    Checks the availablity of `apex` library.    
+    """
+
+    try:
+        import torch.backends.mps
+        return True
+    except ModuleNotFoundError:
+        return False

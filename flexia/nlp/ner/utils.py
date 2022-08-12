@@ -121,14 +121,14 @@ def cutmix(input_ids:List[List[int]],
     return input_ids, attention_mask, target
 
 
-def select_entities(entities:List[str], 
+def filter_entities(entities:List[str], 
                     spans:List[List[int]], 
                     probabilities:List[Any], 
                     min_lengths:Dict[str, int]={}, 
                     min_probabilities:Dict[str, float]={},
                     ) -> Tuple[List[str], List[List[int]], List[Any]]:
 
-    selected_entities, selected_spans, selected_probabilities = [], [], []
+    filtered_entities, filtered_spans, filtered_probabilities = [], [], []
     for entity, span, probability in zip(entities, spans, probabilities):
         start, end = span
         entity_length = end - start + 1
@@ -137,12 +137,50 @@ def select_entities(entities:List[str],
         min_entity_probability = min_probabilities[entity]
 
         if entity_length >= min_entity_length and probability >= min_entity_probability:
-            selected_entities.append(entity)
-            selected_spans.append(span)
-            selected_probabilities.append(probability)
+            filtered_entities.append(entity)
+            filtered_spans.append(span)
+            filtered_probabilities.append(probability)
 
-    return selected_entities, selected_spans, selected_probabilities
+    return filtered_entities, filtered_spans, filtered_probabilities
 
+
+
+def get_entities_from_tags(tags: List[str], 
+                           offset_mapping: np.ndarray, 
+                           probabilities: Optional[np.ndarray]=None,
+                           confidence_func=lambda probabilities: probabilities.mean(),
+                           ) -> Tuple[List[str], List[List[int]], List[float]]:
+    
+    length = len(offset_mapping)
+    
+    if probabilities is None:
+        probabilities = np.zeros(length)
+
+    entities, spans, confidences, entity, i = [], [], [], None, None
+    for j, tag in enumerate(tags):
+        if entity is not None and tag != f"I-{entity}":
+            span = [offset_mapping[i][0], offset_mapping[j - 1][1]]
+            entities.append(entity)
+            spans.append(span)
+
+            confidence = confidence_func(probabilities[i:j])
+            confidences.append(confidence)
+
+            entity = None
+        if tag.startswith("B-"):
+            entity, i = tag[2:], j
+
+    # Because BIO-naming does not ensure the end of the entities (i.e. E-tag), we cannot
+    # automatically detect the end of the last entity in the above loop.
+    if entity is not None:
+        span = [offset_mapping[i][0], offset_mapping[-1][1]]
+        entities.append(entity)
+        spans.append(span)
+
+        confidence = confidence_func(probabilities[i:])
+        confidences.append(confidence)
+
+    return entities, spans, confidences
 
 
 

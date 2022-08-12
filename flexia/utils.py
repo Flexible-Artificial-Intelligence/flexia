@@ -410,11 +410,11 @@ def concat_tensors_with_padding(tensor_list:List[torch.Tensor],
         https://github.com/affjljoo3581/Feedback-Prize-Competition/blob/034427117cc8a3e1dd63401b3519fc28e3f18830/src/utils/model_utils.py#L65
     """
 
-    max_length = max([tensor.size(1) for tensor in tensor_list])
+    max_length = max([tensor.shape[1] for tensor in tensor_list])
 
     padded_tensor_list = []
     for tensor in tensor_list:
-        length_diff = max_length - tensor.size(1)
+        length_diff = max_length - tensor.shape[1]
 
         # This function only supports two and three dimensional tensors.
         if tensor.ndim == 2:
@@ -422,7 +422,7 @@ def concat_tensors_with_padding(tensor_list:List[torch.Tensor],
         elif tensor.ndim == 3:
             padding_size = (0, 0, 0, length_diff)
 
-        padded_tensor = F.pad(tensor, padding_size, value=padding)
+        padded_tensor = F.pad(input=tensor, pad=padding_size, value=padding)
         padded_tensor_list.append(padded_tensor)
 
     padded_tensor_list = torch.cat(padded_tensor_list, dim=0)

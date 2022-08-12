@@ -42,7 +42,11 @@ class LoggingLogger(Logger):
         self.time_format = time_format
         self.log_accelerator_stats = log_accelerator_stats
 
-        self.logger = None
+
+        self.logger = get_logger(name=self.name, 
+                                 logs_format=self.logs_format, 
+                                 path=self.path, 
+                                 level=self.level) 
 
 
     def get_accelerator_stats_string(self, trainer):
@@ -57,12 +61,6 @@ class LoggingLogger(Logger):
             accelerator_string = ""
         
         return accelerator_string
-
-    def on_training_start(self, trainer):
-        self.logger = get_logger(name=self.name, 
-                                 logs_format=self.logs_format, 
-                                 path=self.path, 
-                                 level=self.level) 
 
     def on_training_step_end(self, trainer):
         step = trainer.history["step_epoch"]

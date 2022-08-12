@@ -37,7 +37,6 @@ class WANDBLogger(Logger):
         self.log_accelerator_stats = log_accelerator_stats
         self.kwargs = kwargs
 
-    def on_training_start(self, trainer):
         if self.api_key is not None:
             wandb.login(key=self.api_key)
 

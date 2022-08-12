@@ -38,3 +38,17 @@ def pad_sequence(sequence:List[int],
 
 def pad_sequences(sequences:List[List[int]], **kwargs) -> List[List[int]]:
     return [pad_sequence(sequence=sequence, **kwargs) for sequence in sequences]
+
+
+# TO-DO
+def convert_tokens_to_words_predictions():
+    pass
+
+def convert_words_to_chars_predictions():
+    pass
+
+def convert_words_to_tokens_predictions():
+    pass
+
+def convert_chars_to_tokens_predictions():
+    pass

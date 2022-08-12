@@ -63,9 +63,9 @@ class Trainer(ABC):
                  device:Optional[Union[str, torch.device]]="cpu", 
                  validation_strategy:str="epoch",
                  validation_steps:int=1, 
-                 loggers:Optional[List["Logger"]]=None, 
                  epochs:int=1, 
-                 callbacks=Optional[List["Callback"]], 
+                 loggers:Optional[List["Logger"]]=None, 
+                 callbacks:Optional[List["Callback"]]=None, 
                  seed=None) -> None:
         
         self.model = model

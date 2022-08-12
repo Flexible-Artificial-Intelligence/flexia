@@ -36,16 +36,5 @@ def pad_sequence(sequence:List[int],
         return sequence + padding_values
 
 
-def pad_sequences(sequences:List[List[int]], 
-                  max_length:int, 
-                  padding_value:Any=-1,
-                  padding_side="right",
-                  ) -> List[List[int]]:
-    
-    return [
-        pad_sequence(sequence=sequence, 
-                    max_length=max_length, 
-                    padding_value=padding_value, 
-                    padding_side=padding_side) 
-        for sequence in sequences
-    ]
+def pad_sequences(sequences:List[List[int]], **kwargs) -> List[List[int]]:
+    return [pad_sequence(sequence=sequence, **kwargs) for sequence in sequences]

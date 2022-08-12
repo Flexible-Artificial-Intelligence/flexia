@@ -126,17 +126,28 @@ def filter_entities(entities:List[str],
                     probabilities:List[Any], 
                     min_lengths:Dict[str, int]={}, 
                     min_probabilities:Dict[str, float]={},
+                    strict=False,
                     ) -> Tuple[List[str], List[List[int]], List[Any]]:
+
+    def compare(a, b, strict=False):        
+        return a > b if strict else a >= b
 
     filtered_entities, filtered_spans, filtered_probabilities = [], [], []
     for entity, span, probability in zip(entities, spans, probabilities):
         start, end = span
         entity_length = end - start + 1
 
-        min_entity_length = min_lengths[entity]
-        min_entity_probability = min_probabilities[entity]
+        length_condition = True
+        if len(min_lengths) > 0:
+            min_entity_length = min_lengths[entity]
+            length_condition = compare(entity_length, min_entity_length, strict=strict)
+        
+        probability_condition = True
+        if len(min_probabilities) > 0:
+            min_entity_probability = min_probabilities[entity]
+            probability_condition = compare(probability, min_entity_probability, strict=strict)
 
-        if entity_length >= min_entity_length and probability >= min_entity_probability:
+        if length_condition and probability_condition:
             filtered_entities.append(entity)
             filtered_spans.append(span)
             filtered_probabilities.append(probability)

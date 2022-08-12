@@ -16,7 +16,7 @@
 import torch
 from torch import nn, optim
 from torch.optim import Optimizer, lr_scheduler
-from torch.optim.lr_scheduler import _LRSchedule
+from torch.optim.lr_scheduler import _LRScheduler
 from torch.nn import functional as F
 from torch.utils.data import Dataset, DataLoader
 import numpy as np

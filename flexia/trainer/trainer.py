@@ -21,6 +21,7 @@ from typing import Optional, Union, Any, Tuple, List
 from torch.utils.data import DataLoader
 from abc import ABC, abstractmethod
 import contextlib
+import warnings
 import math
 import gc
 
@@ -97,18 +98,20 @@ class Trainer(ABC):
         self.state = self._state
 
         if not isinstance(self.model, nn.Module):
-            raise TypeError("model")
+            raise TypeError(f"`model` must be instance of `nn.Module`, but given `{type(self.model)}`")
 
         if self.optimizer is not None:
             if not isinstance(self.optimizer, optim.Optimizer):
-                raise TypeError("optimizer")
+                raise TypeError(f"`optimizer` must be instance of `torch.optim.Optimizer`, but given `{type(self.optimizer)}`")
+        
+
+        self.precision_dtype = precision_dtypes[self.precision.value]
+        self.use_amp = self.precision.value in mixed_precision_dtypes
 
 
         assert 0 < self.epochs, f"`epochs` must be greater than 0, but given {self.epochs}."
         assert isinstance(self.gradient_accumulation_steps, int), f"`gradient_accumulation_steps` must be integer type, but given `{type(self.gradient_accumulation_steps)}`"
 
-        self.precision_dtype = precision_dtypes[self.precision.value]
-        self.use_amp = self.precision.value in mixed_precision_dtypes
 
         if self.gradient_scaling and self.use_amp:
             if self.scaler is None:

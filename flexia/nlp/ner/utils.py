@@ -99,6 +99,53 @@ def generate_bio_tagging(entities:List[str],
     return tags
 
 
+
+# AUGMENTATIONS
+def cutmix(input_ids:List[List[int]], 
+           attention_mask:List[List[int]], 
+           target:List[List[Any]], 
+           p:float=0.5, 
+           cut:float=0.25
+           ) -> Tuple[List[List[int]], List[List[int]], List[List[Any]]]:
+
+    if np.random.uniform() < p:
+        batch_size, length = input_ids.size()
+            
+        permutation = np.random.permutation(batch_size)
+        random_length = int(length*cut)
+        start = np.random.randint(length-random_length)
+        input_ids[:,start:start+random_length] = input_ids[permutation,start:start+random_length]
+        attention_mask[:,start:start+random_length] = attention_mask[permutation,start:start+random_length]
+        target[:,start:start+random_length] = target[permutation,start:start+random_length]
+        
+    return input_ids, attention_mask, target
+
+
+def select_entities(entities:List[str], 
+                    spans:List[List[int]], 
+                    probabilities:List[Any], 
+                    min_lengths:Dict[str, int]={}, 
+                    min_probabilities:Dict[str, float]={},
+                    ) -> Tuple[List[str], List[List[int]], List[Any]]:
+
+    selected_entities, selected_spans, selected_probabilities = [], [], []
+    for entity, span, probability in zip(entities, spans, probabilities):
+        start, end = span
+        entity_length = end - start + 1
+
+        min_entity_length = min_lengths[entity]
+        min_entity_probability = min_probabilities[entity]
+
+        if entity_length >= min_entity_length and probability >= min_entity_probability:
+            selected_entities.append(entity)
+            selected_spans.append(span)
+            selected_probabilities.append(probability)
+
+    return selected_entities, selected_spans, selected_probabilities
+
+
+
+
 # TO-DO
 def generate_io_tagging(entities:List[str], 
                         spans:List[List[int]], 
@@ -158,50 +205,3 @@ generate_ioe_tagging = generate_eio_tagging
 generate_iobe_tagging = generate_bieo_tagging
 generate_iobes_tagging = generate_bieso_tagging
 generate_ioblu_tagging = generate_bilou_tagging
-
-
-
-
-
-# AUGMENTATIONS
-def cutmix(input_ids:List[List[int]], 
-           attention_mask:List[List[int]], 
-           target:List[List[Any]], 
-           p:float=0.5, 
-           cut:float=0.25
-           ) -> Tuple[List[List[int]], List[List[int]], List[List[Any]]]:
-
-    if np.random.uniform() < p:
-        batch_size, length = input_ids.size()
-            
-        permutation = np.random.permutation(batch_size)
-        random_length = int(length*cut)
-        start = np.random.randint(length-random_length)
-        input_ids[:,start:start+random_length] = input_ids[permutation,start:start+random_length]
-        attention_mask[:,start:start+random_length] = attention_mask[permutation,start:start+random_length]
-        target[:,start:start+random_length] = target[permutation,start:start+random_length]
-        
-    return input_ids, attention_mask, target
-
-
-def select_entities(entities:List[str], 
-                    spans:List[List[int]], 
-                    probabilities:List[Any], 
-                    min_lengths:Dict[str, int]={}, 
-                    min_probabilities:Dict[str, float]={},
-                    ) -> Tuple[List[str], List[List[int]], List[Any]]:
-
-    selected_entities, selected_spans, selected_probabilities = [], [], []
-    for entity, span, probability in zip(entities, spans, probabilities):
-        start, end = span
-        entity_length = end - start + 1
-
-        min_entity_length = min_lengths[entity]
-        min_entity_probability = min_probabilities[entity]
-
-        if entity_length >= min_entity_length and probability >= min_entity_probability:
-            selected_entities.append(entity)
-            selected_spans.append(span)
-            selected_probabilities.append(probability)
-
-    return selected_entities, selected_spans, selected_probabilities

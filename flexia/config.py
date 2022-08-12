@@ -14,6 +14,7 @@
 
 
 import json
+import pprint
 
 from .third_party.addict import Dict
 
@@ -38,8 +39,8 @@ class Config(Dict):
         
         return self
 
-    def __str__(self) -> str:
-        attributes_string = ", ".join([f"{k}={v}" for k, v in self.items()])
-        return f"Config({attributes_string})"
-
-    __repr__ = __str__
+    def __getitem__(self, key):
+        if key not in self:
+            raise KeyError(key)
+        
+        return super().__getitem__(key)

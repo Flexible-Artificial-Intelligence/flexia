@@ -182,3 +182,26 @@ def cutmix(input_ids:List[List[int]],
         target[:,start:start+random_length] = target[permutation,start:start+random_length]
         
     return input_ids, attention_mask, target
+
+
+def select_entities(entities:List[str], 
+                    spans:List[List[int]], 
+                    probabilities:List[Any], 
+                    min_lengths:Dict[str, int]={}, 
+                    min_probabilities:Dict[str, float]={},
+                    ) -> Tuple[List[str], List[List[int]], List[Any]]:
+
+    selected_entities, selected_spans, selected_probabilities = [], [], []
+    for entity, span, probability in zip(entities, spans, probabilities):
+        start, end = span
+        entity_length = end - start + 1
+
+        min_entity_length = min_lengths[entity]
+        min_entity_probability = min_probabilities[entity]
+
+        if entity_length >= min_entity_length and probability >= min_entity_probability:
+            selected_entities.append(entity)
+            selected_spans.append(span)
+            selected_probabilities.append(probability)
+
+    return selected_entities, selected_spans, selected_probabilities

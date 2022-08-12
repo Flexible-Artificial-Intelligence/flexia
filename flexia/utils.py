@@ -16,7 +16,8 @@
 import torch
 from torch import nn, optim
 from torch.optim import Optimizer, lr_scheduler
-from torch.optim.lr_scheduler import _LRScheduler
+from torch.optim.lr_scheduler import _LRSchedule
+from torch.nn import functional as F
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
 from typing import Any, Union, Optional, List, Union, Tuple, Dict
@@ -389,6 +390,44 @@ def get_bitsandbytes_optimizer(model:nn.Module,
             print(f"Changed precision of {layer} to {layer_optim_bits}.")
 
     return optimizer
+
+
+def concat_tensors_with_padding(tensor_list:List[torch.Tensor], 
+                                padding:Union[int, float]=0
+                                ) -> torch.Tensor:
+    """
+    Concatenate the list of tensors to be a single tensor with paddings.
+    
+    Args:
+        tensor_list: The list of tensors which have different lengths. They should have
+            the shape of `(batch_size, seq_len, dim)` or `(batch_size, seq_len)`.
+        padding: The padding value for the tensors. If the tensor is shorter than other
+            tensors, than it will be padded with this value. Default is `0`.
+    Returns:
+        A concatenated single tnesor.
+
+    References:
+        https://github.com/affjljoo3581/Feedback-Prize-Competition/blob/034427117cc8a3e1dd63401b3519fc28e3f18830/src/utils/model_utils.py#L65
+    """
+
+    max_length = max([tensor.size(1) for tensor in tensor_list])
+
+    padded_tensor_list = []
+    for tensor in tensor_list:
+        length_diff = max_length - tensor.size(1)
+
+        # This function only supports two and three dimensional tensors.
+        if tensor.ndim == 2:
+            padding_size = (0, length_diff)
+        elif tensor.ndim == 3:
+            padding_size = (0, 0, 0, length_diff)
+
+        padded_tensor = F.pad(tensor, padding_size, value=padding)
+        padded_tensor_list.append(padded_tensor)
+
+    padded_tensor_list = torch.cat(padded_tensor_list, dim=0)
+
+    return padded_tensor_list
 
 
 def is_cuda_available():

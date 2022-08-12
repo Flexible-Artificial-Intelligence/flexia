@@ -405,11 +405,6 @@ class Trainer(ABC):
                 if return_validation_outputs:
                     outputs.extend(batch_outputs)
 
-        if return_validation_outputs:
-            outputs = torch.stack(outputs, dim=0)
-        else:
-            outputs = None
-
         gc.collect()
 
         self.on_validation_end(outputs=outputs)
@@ -451,8 +446,6 @@ class Trainer(ABC):
                 outputs.extend(batch_outputs)
                     
         self.state = TrainerState.PREDICTION_END
-
-        outputs = torch.stack(outputs, dim=0)
 
         gc.collect()
     

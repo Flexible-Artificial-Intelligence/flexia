@@ -119,6 +119,8 @@ class Trainer(ABC):
         else:
             self.scaler = None
 
+        self.__apply_gradient_scaling = self.use_amp and self.gradient_scaling and self.scaler is not None
+
         if self.seed is not None:
             self.seed = seed_everything(seed=self.seed)
 
@@ -292,7 +294,7 @@ class Trainer(ABC):
         return get_lr(optimizer=self.optimizer, only_last_group=True, key="lr")
 
     def backward_step(self, loss:torch.Tensor) -> torch.Tensor:
-        if self.scaler is not None and self.use_amp and self.gradient_scaling:
+        if self.__apply_gradient_scaling:
             self.scaler.scale(loss).backward()
         else:
             loss.backward()
@@ -303,7 +305,7 @@ class Trainer(ABC):
     def optimization_step(self, model) -> None:     
         self.clip_gradients(model)
 
-        if self.scaler is not None and self.use_amp and self.gradient_scaling:
+        if self.__apply_gradient_scaling:
             self.scaler.step(self.optimizer)
             self.scaler.update()
         elif self.accelerator.device_type == DeviceType.TPU:
@@ -341,7 +343,8 @@ class Trainer(ABC):
             if self.accelerator.device_type == DeviceType.TPU:
                 xm.reduce_gradients(self.optimizer)
 
-            if self.scaler is not None and self.use_amp and self.gradient_scaling:
+            # unscaling gradients before gradient clipping
+            if self.__apply_gradient_scaling: 
                 self.scaler.unscale_(self.optimizer)
             
             # gradient clipping by norm

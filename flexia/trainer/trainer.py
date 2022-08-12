@@ -403,7 +403,7 @@ class Trainer(ABC):
                 self.state = TrainerState.VALIDATION_STEP_END
 
                 if return_validation_outputs:
-                    outputs.extend(batch_outputs.to("cpu"))
+                    outputs.extend(batch_outputs)
 
         if return_validation_outputs:
             outputs = torch.stack(outputs, dim=0)
@@ -448,7 +448,6 @@ class Trainer(ABC):
                     
                 self.state = TrainerState.PREDICTION_STEP_END
 
-                batch_outputs = batch_outputs.to("cpu")
                 outputs.extend(batch_outputs)
                     
         self.state = TrainerState.PREDICTION_END

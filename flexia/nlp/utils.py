@@ -70,6 +70,7 @@ def get_words_offset_mapping(text: str,
 def convert_tokens_to_chars_predictions(text: str, 
                                         tokens_predictions: Any, 
                                         offset_mapping: List[Tuple[int, int]],
+                                        fill_value: Any = 0,
                                         ) -> np.ndarray:
     """
     Converts tokens predictions to chars predictions.     
@@ -83,7 +84,7 @@ def convert_tokens_to_chars_predictions(text: str,
         num_tokens, num_classes = tokens_predictions.shape
         shape = (text_length, num_classes)
 
-    chars_predictions = np.zeros(shape=shape, dtype=np.float32)
+    chars_predictions = np.full(shape=shape, dtype=np.float32, fill_value=fill_value)
     
     for token_index, (start, end) in enumerate(offset_mapping):
         token_prediction = tokens_predictions[token_index]
@@ -96,6 +97,7 @@ def convert_tokens_to_chars_predictions(text: str,
 def convert_chars_to_tokens_predictions(chars_predictions: Any, 
                                         offset_mapping: List[Tuple[int, int]],
                                         aggregation_function: Callable[[Any], Any] = lambda x: np.mean(x),
+                                        fill_value: Any = 0,
                                         ) -> np.ndarray:
     """
     Converts chars predictions to tokens predictions.
@@ -109,7 +111,7 @@ def convert_chars_to_tokens_predictions(chars_predictions: Any,
         num_chars, num_classes = chars_predictions.shape
         shape = (num_tokens, num_classes)
 
-    tokens_predictions = np.zeros(shape=shape, dtype=np.float32)
+    tokens_predictions = np.full(shape=shape, dtype=np.float32, fill_value=fill_value)
     
     for token_index, (start, end) in enumerate(offset_mapping):
         token_predictions = aggregation_function(chars_predictions[start:end])
@@ -121,6 +123,7 @@ def convert_chars_to_tokens_predictions(chars_predictions: Any,
 def convert_words_to_chars_predictions(text: str, 
                                        words_predictions: Any, 
                                        words_offset_mapping: List[Tuple[int, int]],
+                                       fill_value: Any = 0,
                                        ) -> np.ndarray:
     """
     Converts words predictions to chars predictions.
@@ -134,7 +137,7 @@ def convert_words_to_chars_predictions(text: str,
         num_words, num_classes = words_predictions.shape
         shape = (text_length, num_classes)
 
-    chars_predictions = np.zeros(shape=shape, dtype=np.float32)
+    chars_predictions = np.full(shape=shape, dtype=np.float32, fill_value=fill_value)
     
     for word_index, (start, end) in enumerate(words_offset_mapping):
         word_prediction = words_predictions[word_index]
@@ -145,7 +148,8 @@ def convert_words_to_chars_predictions(text: str,
 
 def convert_chars_to_words_predictions(chars_predictions:Any, 
                                        words_offset_mapping: List[Tuple[int, int]],
-                                       aggregation_function: Callable[[Any], Any] = lambda x: np.mean(x)
+                                       aggregation_function: Callable[[Any], Any] = lambda x: np.mean(x),
+                                       fill_value=0,
                                        ) -> np.ndarray:
     """
     Converts chars predictions to words predictions.
@@ -159,7 +163,7 @@ def convert_chars_to_words_predictions(chars_predictions:Any,
         num_chars, num_classes = chars_predictions.shape
         shape = (num_words, num_classes)
     
-    words_predictions = np.zeros(shape=shape, dtype=np.float32)
+    words_predictions = np.full(shape=shape, dtype=np.float32, fill_value=fill_value)
     
     for word_index, (start, end) in enumerate(words_offset_mapping):
         word_predictions = aggregation_function(chars_predictions[start:end])

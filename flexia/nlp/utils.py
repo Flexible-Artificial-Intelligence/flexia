@@ -66,6 +66,7 @@ def get_words_offset_mapping(text: str,
     return words_offset_mapping
 
 
+
 def convert_tokens_to_chars_predictions(text: str, 
                                         tokens_predictions: Any, 
                                         offset_mapping: List[Tuple[int, int]],
@@ -75,7 +76,14 @@ def convert_tokens_to_chars_predictions(text: str,
     """
     
     text_length = len(text)
-    chars_predictions = np.zeros(shape=text_length, dtype=np.float32)
+
+    if tokens_predictions.ndim == 1:
+        shape = (text_length, )
+    elif tokens_predictions.ndim == 2:
+        num_tokens, num_classes = tokens_predictions.shape
+        shape = (text_length, num_classes)
+
+    chars_predictions = np.zeros(shape=shape, dtype=np.float32)
     
     for token_index, (start, end) in enumerate(offset_mapping):
         token_prediction = tokens_predictions[token_index]
@@ -94,7 +102,14 @@ def convert_chars_to_tokens_predictions(chars_predictions: Any,
     """
     
     num_tokens = len(offset_mapping)
-    tokens_predictions = np.zeros(shape=num_tokens, dtype=np.float32)
+
+    if chars_predictions.ndim == 1:
+        shape = (num_tokens, )
+    elif chars_predictions.ndim == 2:
+        num_chars, num_classes = chars_predictions.shape
+        shape = (num_tokens, num_classes)
+
+    tokens_predictions = np.zeros(shape=shape, dtype=np.float32)
     
     for token_index, (start, end) in enumerate(offset_mapping):
         token_predictions = aggregation_function(chars_predictions[start:end])
@@ -112,7 +127,14 @@ def convert_words_to_chars_predictions(text: str,
     """
     
     text_length = len(text)
-    chars_predictions = np.zeros(shape=text_length, dtype=np.float32)
+    
+    if words_predictions.ndim == 1:
+        shape = (text_length, )
+    elif words_predictions.ndim == 2:
+        num_words, num_classes = words_predictions.shape
+        shape = (text_length, num_classes)
+
+    chars_predictions = np.zeros(shape=shape, dtype=np.float32)
     
     for word_index, (start, end) in enumerate(words_offset_mapping):
         word_prediction = words_predictions[word_index]
@@ -130,7 +152,14 @@ def convert_chars_to_words_predictions(chars_predictions:Any,
     """
     
     num_words = len(words_offset_mapping)
-    words_predictions = np.zeros(shape=num_words, dtype=np.float32)
+    
+    if chars_predictions.ndim == 1:
+        shape = (num_words, )
+    elif chars_predictions.ndim == 2:
+        num_chars, num_classes = chars_predictions.shape
+        shape = (num_words, num_classes)
+    
+    words_predictions = np.zeros(shape=shape, dtype=np.float32)
     
     for word_index, (start, end) in enumerate(words_offset_mapping):
         word_predictions = aggregation_function(chars_predictions[start:end])

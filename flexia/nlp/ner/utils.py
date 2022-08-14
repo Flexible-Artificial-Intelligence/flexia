@@ -99,6 +99,24 @@ def generate_bio_tagging(entities:List[str],
     return tags
 
 
+def generate_io_tagging(entities:List[str], 
+                        spans:List[List[int]], 
+                        offset_mapping:List[Tuple[int, int]],
+                        ) -> List[str]:
+    """
+    IO (Inside-Outside) tagging
+    """
+
+    num_tokens = len(offset_mapping)
+    tags = ["O"]*num_tokens
+    for entity, (entity_start, entity_end) in zip(entities, spans):
+        current_tag = f"I-{entity}"
+        for token_index, (token_start, token_end) in enumerate(offset_mapping):
+            if min(entity_end, token_end) - max(entity_start, token_start) > 0:
+                tags[token_index] = current_tag
+                
+    return tags
+
 
 # AUGMENTATIONS
 def cutmix(input_ids:List[List[int]], 
@@ -196,15 +214,6 @@ def get_entities_from_tags(tags: List[str],
 
 
 # TO-DO
-def generate_io_tagging(entities:List[str], 
-                        spans:List[List[int]], 
-                        offset_mapping:List[Tuple[int, int]],
-                        ) -> List[str]:
-    """
-    IO (Inside-Outside) tagging
-    """
-
-    pass
 
 def generate_eio_tagging(entities:List[str], 
                          spans:List[List[int]], 

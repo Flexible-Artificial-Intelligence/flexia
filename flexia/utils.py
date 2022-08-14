@@ -392,14 +392,14 @@ def get_bitsandbytes_optimizer(model:nn.Module,
     return optimizer
 
 
-def concat_tensors_with_padding(tensor_list:List[torch.Tensor], 
+def concat_tensors_with_padding(tensors:List[torch.Tensor], 
                                 padding:Union[int, float]=0,
-                                ) -> torch.Tensor:
+                                dim=1) -> torch.Tensor:
     """
     Concatenate the list of tensors to be a single tensor with paddings.
     
     Args:
-        tensor_list: The list of tensors which have different lengths. They should have
+        tensors: The list of tensors which have different lengths. They should have
             the shape of `(batch_size, seq_len, dim)` or `(batch_size, seq_len)`.
         padding: The padding value for the tensors. If the tensor is shorter than other
             tensors, than it will be padded with this value. Default is `0`.
@@ -410,11 +410,11 @@ def concat_tensors_with_padding(tensor_list:List[torch.Tensor],
         https://github.com/affjljoo3581/Feedback-Prize-Competition/blob/034427117cc8a3e1dd63401b3519fc28e3f18830/src/utils/model_utils.py#L65
     """
 
-    max_length = max([tensor.shape[1] for tensor in tensor_list])
+    max_length = max(tensor.shape[dim] for tensor in tensors)
 
-    padded_tensor_list = []
-    for tensor in tensor_list:
-        length_diff = max_length - tensor.shape[1]
+    padded_tensors = []
+    for tensor in tensors:
+        length_diff = max_length - tensor.shape[dim]
 
         # This function only supports two and three dimensional tensors.
         if tensor.ndim == 2:
@@ -422,12 +422,16 @@ def concat_tensors_with_padding(tensor_list:List[torch.Tensor],
         elif tensor.ndim == 3:
             padding_size = (0, 0, 0, length_diff)
 
-        padded_tensor = F.pad(input=tensor, pad=padding_size, value=padding)
-        padded_tensor_list.append(padded_tensor)
+        padded_tensor = F.pad(input=tensor, 
+                              pad=padding_size, 
+                              value=padding, 
+                              mode="constant")
 
-    padded_tensor_list = torch.cat(padded_tensor_list, dim=0)
+        padded_tensors.append(padded_tensor)
 
-    return padded_tensor_list
+    padded_tensors = torch.cat(padded_tensors, dim=0)
+
+    return padded_tensors
 
 
 def is_cuda_available():

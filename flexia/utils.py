@@ -326,14 +326,14 @@ def get_transformers_scheduler(optimizer:Optimizer,
         raise ValueError(f"Library `transformers` is not found.")
 
 
-def get_optimizer(model_parameters:Any, name:str, parameters:dict={}, library:str="torch") -> Optimizer:
+def get_optimizer(module_parameters:Any, name:str, parameters:dict={}, library:str="torch") -> Optimizer:
     """
     Returns instance of optimizer.
 
     Inputs:
         name:str - name of optimizer, e.g AdamW, SGD, RMSprop.
         parameters:dict - parameters of optimizer, e.g lr, weight_decay. Default: {}.
-        model_parameters:Any - model's parameters to optimize.
+        module_parameters:Any - module's parameters to optimize.
         library:str - library from which the optimizer will be used. Possible values: ["torch", "transformers", "bitsandbytes"]. Default: "torch".
     
     Returns:
@@ -362,29 +362,29 @@ def get_optimizer(model_parameters:Any, name:str, parameters:dict={}, library:st
     optimizer = __get_from_library(library=module, 
                                    name=name, 
                                    parameters=parameters, 
-                                   params=model_parameters)
+                                   params=module_parameters)
 
     return optimizer
 
 
-def get_bitsandbytes_optimizer(model:nn.Module, 
+def get_bitsandbytes_optimizer(module:nn.Module, 
                                name:str,
-                               model_parameters=None,  
+                               module_parameters=None,  
                                parameters:dict={}, 
                                layers_optim_bits=[32], 
                                layers=[nn.Embedding], 
                                verbose=False):
 
-    if model_parameters is None:
-        model_parameters = model.parameters()
+    if module_parameters is None:
+        module_parameters = module.parameters()
 
-    optimizer = get_optimizer(model_parameters=model_parameters, 
+    optimizer = get_optimizer(module_parameters=module_parameters, 
                               name=name, 
                               parameters=parameters, 
                               library="bitsandbytes")
 
     for layer, layer_optim_bits in zip(layers, layers_optim_bits):
-        set_layer_optim_bits(model=model, optim_bits=layer_optim_bits, layer=layer)
+        set_layer_optim_bits(module=module, optim_bits=layer_optim_bits, layer=layer)
 
         if verbose:
             print(f"Changed precision of {layer} to {layer_optim_bits}.")
@@ -409,7 +409,7 @@ def concat_tensors_with_padding(tensors:List[torch.Tensor],
     References:
         https://github.com/affjljoo3581/Feedback-Prize-Competition/blob/034427117cc8a3e1dd63401b3519fc28e3f18830/src/utils/model_utils.py#L65
     """
-
+    
     max_length = max(tensor.shape[dim] for tensor in tensors)
 
     padded_tensors = []

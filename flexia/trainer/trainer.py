@@ -60,7 +60,7 @@ class Trainer(ABC):
                  precision="fp32",
                  gradient_clipping_strategy="off",
                  gradient_clipping_value:float=None, 
-                 device:Optional[Union[str, torch.device]]="cpu", 
+                 accelerator:Optional[Union[str, torch.device]]="cpu", 
                  validation_strategy:str="epoch",
                  validation_steps:int=1, 
                  epochs:int=1, 
@@ -78,8 +78,7 @@ class Trainer(ABC):
         self.precision = Precision(precision)
         self.gradient_clipping_strategy = GradientClippingStrategy(gradient_clipping_strategy)
         self.gradient_clipping_value = gradient_clipping_value
-        self.accelerator = AutoAccelerator(device)
-        self.device = self.accelerator.device
+        self.accelerator = AutoAccelerator(accelerator)
         self.validation_strategy = IntervalStrategy(validation_strategy)
         self.validation_steps = validation_steps
         self.scaler = scaler
@@ -329,7 +328,7 @@ class Trainer(ABC):
     def train_one_step(self, model, batch:Any) -> Tuple[torch.Tensor, dict]:
         model.train()
         with self.context_manager():
-            batch_loss, batch_metrics, batch_outputs = self.training_step(model=model, batch=batch)
+            batch_loss, batch_metrics, *batch_outputs = self.training_step(model=model, batch=batch)
 
             if self.gradient_accumulation_steps > 1:
                 batch_loss /= self.gradient_accumulation_steps
@@ -379,7 +378,7 @@ class Trainer(ABC):
 
                 self.state = TrainerState.VALIDATION_STEP_START
 
-                batch_loss, batch_metrics, batch_outputs = self.training_step(model=model, batch=batch)
+                batch_loss, batch_metrics, *batch_outputs = self.validation_step(model=model, batch=batch)
 
                 loss.update(batch_loss.item(), n=batch_size)
                 metrics.update(batch_metrics, n=batch_size)
@@ -403,7 +402,7 @@ class Trainer(ABC):
                 self.state = TrainerState.VALIDATION_STEP_END
 
                 if return_validation_outputs:
-                    outputs.extend(batch_outputs)
+                    outputs.append(batch_outputs)
 
         gc.collect()
 
@@ -443,7 +442,7 @@ class Trainer(ABC):
                     
                 self.state = TrainerState.PREDICTION_STEP_END
 
-                outputs.extend(batch_outputs)
+                outputs.append(batch_outputs)
                     
         self.state = TrainerState.PREDICTION_END
 
@@ -451,10 +450,12 @@ class Trainer(ABC):
     
         return outputs
 
-
     @abstractmethod
     def training_step(self, model, batch):
         pass
+
+    def validation_step(self, model, batch):
+        return self.training_step(model, batch)
 
     @abstractmethod
     def prediction_step(self, model, batch:Any):
@@ -466,10 +467,6 @@ class Trainer(ABC):
         Called when the validation loop ends.
         """
 
-        pass
-
-
-    def load_arguments_from_dictionary(self, dictionary):
         pass
 
     # Aliases

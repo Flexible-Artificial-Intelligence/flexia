@@ -27,6 +27,8 @@ class WANDBLogger(Logger):
                  finish=True, 
                  log_accelerator_stats=False, 
                  summary_values={},
+                 on_epoch=True,
+                 on_batch=True,
                  **kwargs):
 
         super().__init__()     
@@ -35,6 +37,8 @@ class WANDBLogger(Logger):
         self.finish = finish
         self.summary_values = summary_values
         self.log_accelerator_stats = log_accelerator_stats
+        self.on_epoch = on_epoch
+        self.on_batch = on_batch
         self.kwargs = kwargs
 
         if self.api_key is not None:
@@ -46,10 +50,17 @@ class WANDBLogger(Logger):
     def on_training_step_end(self, trainer):
         logs = {
             "train/loss": trainer.history["train_loss"], 
-            "train/loss vs batch": trainer.history["train_loss_batch"], 
-            "train/loss vs epoch": trainer.history["train_loss_epoch"],
-            "lr": trainer.history["lr"]
+            "lr": trainer.history["lr"],
         }
+
+        if self.on_batch:
+            batch_logs = {"train/loss vs batch": trainer.history["train_loss_batch"]}
+            logs.update(batch_logs)
+
+        if self.on_epoch:
+            epoch_logs = {"train/loss vs epoch": trainer.history["train_loss_epoch"],}
+            logs.update(epoch_logs)
+
 
         train_metrics = trainer.history["train_metrics"]
         train_metrics_batch = trainer.history["train_metrics_batch"]
@@ -58,10 +69,16 @@ class WANDBLogger(Logger):
 
         for metric in train_metrics.keys():
             logs.update({
-                f"train/{metric}": train_metrics[metric], 
-                f"train/{metric} vs batch": train_metrics_batch[metric], 
-                f"train/{metric} vs epoch": train_metrics_epoch[metric],
+                f"train/{metric}": train_metrics[metric],
             })
+
+            if self.on_batch:
+                batch_logs = {f"train/{metric} vs batch": train_metrics_batch[metric]}
+                logs.update(batch_logs)
+
+            if self.on_epoch:
+                epoch_logs = {f"train/{metric} vs epoch": train_metrics_epoch[metric]}
+                logs.update(epoch_logs)
 
         wandb.log(logs, step=step) 
 
@@ -81,13 +98,14 @@ class WANDBLogger(Logger):
         wandb.log(logs, step=step)
 
     def on_epoch_end(self, trainer):
-        logs = {
-            "epoch": trainer.history["epoch"]
-        }
-        
-        step = trainer.history["step"]
+        if self.on_epoch:
+            logs = {
+                "epoch": trainer.history["epoch"]
+            }
+            
+            step = trainer.history["step"]
 
-        wandb.log(logs, step=step)
+            wandb.log(logs, step=step)
 
     def on_training_end(self, trainer):
         if self.finish:

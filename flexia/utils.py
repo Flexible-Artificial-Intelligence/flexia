@@ -146,13 +146,15 @@ def get_stepped_lrs(optimizer:Optimizer,
 
 
 def load_checkpoint(path:str, 
-                    model:nn.Module, 
+                    model:nn.Module=None, 
                     optimizer:Optional[Optimizer]=None, 
                     scheduler:Optional[_LRScheduler]=None, 
+                    scaler=None,
                     strict:bool=True,  
                     custom_keys:Optional["dict[str, str]"]=dict(model="model_state", 
                                                                 optimizer="optimizer_state",
-                                                                scheduler="scheduler_state"), 
+                                                                scheduler="scheduler_state", 
+                                                                scaler="scaler_state"), 
                     eval_mode=False, 
                     load_states=True) -> dict:
 
@@ -175,11 +177,12 @@ def load_checkpoint(path:str,
 
         checkpoint = torch.load(path, map_location=initialize_device())
         
-        model_key = custom_keys.get("model", "model_state")
-        model_state = checkpoint[model_key]
-        
-        if load_states:
-            model.load_state_dict(model_state, strict=strict)
+        if model is not None:
+            model_key = custom_keys.get("model", "model_state")
+            model_state = checkpoint.get(model_key)
+            
+            if model_state is not None and load_states:
+                model.load_state_dict(model_state, strict=strict)
 
         if optimizer is not None:
             optimizer_key = custom_keys.get("optimizer", "optimizer_state")
@@ -194,7 +197,14 @@ def load_checkpoint(path:str,
             
             if scheduler_state is not None and load_states:
                 scheduler.load_state_dict(scheduler_state, strict=strict)
-    
+
+        if scaler is not None:
+            scaler_key = custom_keys.get("scaler", "scaler_state")
+            scaler_state = checkpoint.get(scaler_key)
+
+            if scaler_state is not None and load_states:
+                scaler.load_state_dict(scaler_state, strict=strict)
+
         if eval_mode:
             model.eval()
 
@@ -202,20 +212,24 @@ def load_checkpoint(path:str,
 
 
 def save_checkpoint(path:str, 
-                    model:nn.Module, 
+                    model:nn.Module=None, 
                     optimizer:Optional[Optimizer]=None, 
                     scheduler:Optional[_LRScheduler]=None, 
+                    scaler=None,
                     custom_keys:Optional["dict[str, str]"]=dict(model="model_state", 
                                                                 optimizer="optimizer_state",
-                                                                scheduler="scheduler_state"),
+                                                                scheduler="scheduler_state", 
+                                                                scaler="scaler_state"),
                     device_type="cpu",
                     **kwargs) -> dict:
         
     device_type = DeviceType(device_type)
     
     checkpoint = {}
-    model_key = custom_keys.get("model", "model_state")
-    checkpoint[model_key] = model.state_dict()
+
+    if model is not None:
+        model_key = custom_keys.get("model", "model_state")
+        checkpoint[model_key] = model.state_dict()
 
     if optimizer is not None:
         optimizer_key = custom_keys.get("optimizer", "optimizer_state")
@@ -224,6 +238,10 @@ def save_checkpoint(path:str,
     if scheduler is not None:
         scheduler_key = custom_keys.get("scheduler", "scheduler_state")
         checkpoint[scheduler_key] = scheduler.state_dict()
+
+    if scaler is not None:
+        scaler_key = custom_keys.get("scaler", "scaler_state")
+        checkpoint[scaler_key] = scaler.state_dict()
 
     checkpoint.update(kwargs)
 

@@ -457,7 +457,7 @@ class Trainer(ABC):
     def validation_step(self, model, batch):
         return self.training_step(model, batch)
 
-    @abstractmethod
+
     def prediction_step(self, model, batch:Any):
         pass
 

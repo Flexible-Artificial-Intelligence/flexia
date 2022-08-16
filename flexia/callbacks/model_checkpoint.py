@@ -36,15 +36,19 @@ class ModelCheckpoint(Callback):
                  delta:Union[float, int]=0.0, 
                  directory:str="./", 
                  overwriting:bool=False, 
-                 filename_format:str="checkpoint.pth", 
+                 filename_format:str="checkpoint.pt", 
                  num_candidates:Union[str, float, int]=1, 
-                 save_model_state_at_end=False,
+                 save_model_on_end=False,
                  model_path=None,
                  save_optimizer_state=True, 
                  save_scheduler_state=True, 
-                 custom_keys={"model": "model_state",  
-                              "optimizer": "optimizer_state", 
-                              "scheduler": "scheduler_state"}, 
+                 save_scaler_state=False,
+                 custom_keys={
+                    "model": "model_state",  
+                    "optimizer": "optimizer_state", 
+                    "scheduler": "scheduler_state", 
+                    "scaler": "scaler_state",
+                }, 
                 save_checkpoint_on_exception=False, 
                 save_interval=None, 
                 save_interval_strategy="off", 
@@ -60,10 +64,11 @@ class ModelCheckpoint(Callback):
         self.overwriting = overwriting
         self.filename_format = filename_format
         self.num_candidates = num_candidates
-        self.save_model_state_at_end = save_model_state_at_end
+        self.save_model_on_end = save_model_on_end
         self.model_path = model_path
         self.save_optimizer_state = save_optimizer_state
         self.save_scheduler_state = save_scheduler_state
+        self.save_scaler_state = save_scaler_state
         self.custom_keys = custom_keys
         self.save_checkpoint_on_exception = save_checkpoint_on_exception
         self.save_interval = save_interval
@@ -90,13 +95,13 @@ class ModelCheckpoint(Callback):
                 raise NotADirectoryError(f"'{self.directory}' is not directory.")
 
         if self.model_path is None:
-            self.model_path = os.path.join(self.directory, "model.pth")
+            self.model_path = os.path.join(self.directory, "model.pt")
 
         if self.save_interval_filename_format is None:
             if self.save_interval_strategy == IntervalStrategy.EPOCH:
-                self.save_interval_filename_format = "checkpoint_{epoch}.pth"
+                self.save_interval_filename_format = "checkpoint_{epoch}.pt"
             else:
-                self.save_interval_filename_format = "checkpoint_{step}.pth"
+                self.save_interval_filename_format = "checkpoint_{step}.pt"
     
         self.all_candidates = []
         self.all_interval_candidates = []
@@ -136,7 +141,7 @@ class ModelCheckpoint(Callback):
             candidates_list = candidates_list[-self.num_candidates:]
                 
             
-    def format_filename(self, filename_format="checkpoint.pth", data={}) -> str:
+    def format_filename(self, filename_format="checkpoint.pt", data={}) -> str:
         filename = filename_format.format(**data)            
         return filename
             
@@ -200,23 +205,26 @@ class ModelCheckpoint(Callback):
         self.__select_candidates(candidates_list=self.all_interval_candidates)
 
 
-    def save_checkpoint(self, trainer, directory=None, filename_format="checkpoint.pth", **kwargs):
+    def save_checkpoint(self, trainer, directory=None, filename_format="checkpoint.pt", **kwargs):
         if directory is None:
             directory = self.directory
 
         checkpoint_filename = self.format_filename(filename_format=filename_format, data=trainer.history)
         checkpoint_path = os.path.join(directory, checkpoint_filename)
 
-        checkpoint = save_checkpoint(model=trainer.model, 
-                                     optimizer=trainer.optimizer if self.save_optimizer_state else None, 
-                                     scheduler=trainer.scheduler if self.save_scheduler_state else None, 
-                                     custom_keys=self.custom_keys, 
-                                     path=checkpoint_path, 
-                                     step=trainer.history["step"], 
-                                     epoch=trainer.history["epoch"],
-                                     monitor_value=trainer.history[self.monitor_value], 
-                                     device_type=trainer.accelerator.device_type,
-                                     **kwargs)
+        checkpoint = save_checkpoint(
+            model=trainer.model, 
+            optimizer=trainer.optimizer if self.save_optimizer_state else None, 
+            scheduler=trainer.scheduler if self.save_scheduler_state else None, 
+            scaler=trainer.scaler if trainer.scaler is not None and self.save_scaler_state else None,
+            custom_keys=self.custom_keys, 
+            path=checkpoint_path, 
+            step=trainer.history["step"], 
+            epoch=trainer.history["epoch"],
+            monitor_value=trainer.history[self.monitor_value], 
+            device_type=trainer.accelerator.device_type,
+            **kwargs
+        )
 
         return checkpoint_path, checkpoint
 
@@ -227,10 +235,10 @@ class ModelCheckpoint(Callback):
 
     def on_exception(self, trainer):
         if self.save_checkpoint_on_exception:
-            filename_format = "last_checkpoint_step_{step}_epoch_{epoch}.pth"
+            filename_format = "last_checkpoint_step_{step}_epoch_{epoch}.pt"
             checkpoint_path, checkpoint = self.save_checkpoint(trainer=trainer, filename_format=filename_format)
 
     
     def on_training_end(self, trainer) -> None:
-        if self.save_model_state_at_end:
+        if self.save_model_on_end:
             self.save_model(trainer=trainer, path=self.model_path)

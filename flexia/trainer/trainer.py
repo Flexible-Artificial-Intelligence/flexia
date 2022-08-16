@@ -378,7 +378,7 @@ class Trainer(ABC):
 
                 self.state = TrainerState.VALIDATION_STEP_START
 
-                batch_loss, batch_metrics, *batch_outputs = self.validation_step(model=model, batch=batch)
+                batch_loss, batch_metrics, batch_outputs = self.validation_step(model=model, batch=batch)
 
                 loss.update(batch_loss.item(), n=batch_size)
                 metrics.update(batch_metrics, n=batch_size)

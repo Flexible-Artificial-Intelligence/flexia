@@ -14,30 +14,22 @@
 
 
 import torch
-from torch import nn, optim
-from torch.optim import Optimizer, lr_scheduler
+from torch import nn
+from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.nn import functional as F
-from torch.utils.data import Dataset, DataLoader
 import numpy as np
-from typing import Any, Union, Optional, List, Union, Tuple, Dict
+from typing import Union, Optional, List, Union, Tuple, Dict
 import random
-import os
 
 
-from .import_utils import is_transformers_available, is_bitsandbytes_available, is_torch_xla_available, is_torch_backend_mps_available
-from .bnb_utils import set_layer_optim_bits
-from .enums import SchedulerLibrary, OptimizerLibrary, DeviceType
+from .import_utils import is_torch_xla_available
+from .python_utils import get_random_number
+from .enums import DeviceType
 
 
 if is_torch_xla_available():
     import torch_xla.core.xla_model as xm
-
-if is_transformers_available():
-    import transformers
-
-if is_bitsandbytes_available():
-    import bitsandbytes as bnb
 
 
 precision_dtypes = {
@@ -47,32 +39,15 @@ precision_dtypes = {
 }
 
 mixed_precision_dtypes = ("fp16", "bf16")
+default_checkpoint_custom_keys = {
+    "model": "model_state",
+    "optimizer": "optimizer_state",
+    "scheduler": "scheduler_state",
+    "scaler": "scaler_state",
+}
 
 
-def initialize_device(device=None):
-    if device is None:
-        if is_cuda_available():
-            device = torch.device("cuda:0")
-        elif is_tpu_available():
-            device = xm.xla_device(n=0)
-        elif is_mps_available():
-            device = torch.device("mps:0")
-        else:
-            device = torch.device("cpu:0")
-
-    device = torch.device(device)
-
-    return device
-    
-
-def get_random_number(min_value:int=0, max_value:int=50) -> int:
-    """
-    Returns random value from [`min_value`, `max_value`] range.
-    """
-    
-    return random.randint(min_value, max_value)
-
-def seed_everything(seed:Optional[int]=None) -> int:
+def seed_everything(seed:Optional[int]=None, deterministic:int=True, benchmark:int=True) -> int:
     """
     Sets seed for `torch`, `numpy` and `random` libraries to have opportunity to reproduce results.
     """
@@ -83,66 +58,13 @@ def seed_everything(seed:Optional[int]=None) -> int:
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = True
+    torch.backends.cudnn.deterministic = deterministic
+    torch.backends.cudnn.benchmark = benchmark
 
     if is_torch_xla_available():
         xm.set_rng_seed(seed)
     
     return seed
-    
-
-def get_lr(optimizer:Optimizer, only_last_group:bool=False, key:str="lr") -> Union[List[float], float]:
-    """
-    Returns optimizer's learning rates for each or last group.
-    """
-
-    if not isinstance(optimizer, Optimizer):
-        raise TypeError(f"The given `optimizer` type is not supported, it must be instance of Optimizer.")
-    
-    param_groups = optimizer.param_groups
-    lrs = [param_group[key] for param_group in param_groups]        
-    return lrs[-1] if only_last_group else lrs
-
-
-def get_stepped_lrs(optimizer:Optimizer, 
-                    scheduler:Optional[_LRScheduler]=None, 
-                    steps:int=10, 
-                    steps_start:int=1,
-                    return_as_dict:bool=False,
-                    return_steps_list:bool=False,
-                    only_last_group:bool=False, 
-                    key:str="lr"
-                    ) -> Union[List[float], Dict[int, List[float]], Tuple[List[int]], Union[List[List[float]], Dict[int, List[float]]]]:
-    
-    steps = range(0+steps_start, steps+steps_start)
-    
-    param_groups = optimizer.param_groups
-    num_param_groups = len(param_groups)
-    
-    groups_lrs = [[]]*num_param_groups
-    for step in steps:
-        groups_lr = get_lr(optimizer)
-        
-        for group_index, group_lr in enumerate(groups_lr):
-            groups_lrs[group_index].append(group_lr)
-            
-        optimizer.step()
-        
-        if scheduler is not None:
-            scheduler.step()
-            
-    
-    if return_as_dict:
-        groups_lrs = {group_index: group_lrs for group_index, group_lrs in enumerate(groups_lrs)}
-        
-    if only_last_group:
-        groups_lrs = groups_lrs[-1]
-        
-    if return_steps_list:
-        return steps, groups_lrs
-    
-    return groups_lrs
 
 
 def load_checkpoint(path:str, 
@@ -151,10 +73,7 @@ def load_checkpoint(path:str,
                     scheduler:Optional[_LRScheduler]=None, 
                     scaler=None,
                     strict:bool=True,  
-                    custom_keys:Optional["dict[str, str]"]=dict(model="model_state", 
-                                                                optimizer="optimizer_state",
-                                                                scheduler="scheduler_state", 
-                                                                scaler="scaler_state"), 
+                    custom_keys:Optional[Dict[str, str]]=default_checkpoint_custom_keys, 
                     eval_mode=False, 
                     load_states=True) -> dict:
 
@@ -175,7 +94,7 @@ def load_checkpoint(path:str,
             
         """
 
-        checkpoint = torch.load(path, map_location=initialize_device())
+        checkpoint = torch.load(path)
         
         if model is not None:
             model_key = custom_keys.get("model", "model_state")
@@ -216,12 +135,10 @@ def save_checkpoint(path:str,
                     optimizer:Optional[Optimizer]=None, 
                     scheduler:Optional[_LRScheduler]=None, 
                     scaler=None,
-                    custom_keys:Optional["dict[str, str]"]=dict(model="model_state", 
-                                                                optimizer="optimizer_state",
-                                                                scheduler="scheduler_state", 
-                                                                scaler="scaler_state"),
-                    device_type="cpu",
-                    **kwargs) -> dict:
+                    custom_keys:Optional[Dict[str, str]]=default_checkpoint_custom_keys,
+                    device_type:Union[DeviceType, str]="cpu",
+                    **kwargs
+                    ) -> str:
         
     device_type = DeviceType(device_type)
     
@@ -249,165 +166,6 @@ def save_checkpoint(path:str,
     save_function(checkpoint, path)
 
     return path
-
-
-def get_random_sample(dataset:Dataset) -> Any:
-    """
-    Returns random sample from dataset.
-    """
-
-    index = random.randint(0, len(dataset)-1)
-    sample = dataset[index]
-    return sample
-
-
-def get_batch(loader:DataLoader) -> Any:
-    """
-    Returns batch from loader.
-    """
-
-    batch = next(iter(loader))
-    return batch
-
-
-def __get_from_library(library, name, parameters, **kwargs):
-    instance = getattr(library, name)
-    instance = instance(**kwargs, **parameters)
-
-    return instance
-
-
-def get_scheduler(optimizer:Optimizer, name:str, parameters:dict={}, library="torch", *args, **kwargs) -> _LRScheduler:
-    """
-    Returns instance of scheduler.
-
-    Inputs:
-        name:str - name of scheduler, e.g ReduceLROnPlateau, CosineAnnealingWarmRestarts, get_cosine_schedule_with_warmup.
-        parameters:dict - parameters of scheduler, e.g num_training_steps, T_mult, last_epoch. Default: {}.
-        optimizer:Any - instance of optimizer to schedule the learning rate.
-        library:str - library from which the scheduler will be used. Possible values: ["torch", "transformers"]. Default: "torch".
-    
-    Returns:
-        scheduler:_LRScheduler - instance of scheduler.
-
-    """
-
-
-    library = SchedulerLibrary(library)
-
-    if library == SchedulerLibrary.TORCH:
-        module = lr_scheduler
-
-    elif library == SchedulerLibrary.TRANSFORMERS:
-        if is_transformers_available():
-            module = transformers
-        else:
-            raise ValueError(f"Library `{library}` is not found or not provided.")
-
-    scheduler = __get_from_library(library=module, 
-                                   name=name, 
-                                   parameters=parameters, 
-                                   optimizer=optimizer)
-
-    return scheduler
-
-
-def get_transformers_scheduler(optimizer:Optimizer, 
-                               name:str,
-                               num_training_steps:int,  
-                               parameters:dict={}, 
-                               warmup:Union[float, int]=0.0, 
-                               gradient_accumulation_steps:int=1):
-
-    if is_transformers_available():
-        # number of training steps relatively on gradient accumulation steps
-        num_training_steps = num_training_steps // gradient_accumulation_steps
-
-        # ratio of warmup steps
-        if 0 <= warmup <= 1:
-            num_warmup_steps = int(num_training_steps * warmup)
-        else:
-            num_warmup_steps = warmup
-        
-        # updating parameters dictionary with new defined parameters
-        parameters.update({
-            "num_training_steps": num_training_steps, 
-            "num_warmup_steps": num_warmup_steps
-        })
-
-        # getting scheduler from `transformers` library
-        module = transformers
-        scheduler = __get_from_library(library=module, name=name, parameters=parameters, optimizer=optimizer)
-
-        return scheduler
-    else:
-        raise ValueError(f"Library `transformers` is not found.")
-
-
-def get_optimizer(module_parameters:Any, name:str, parameters:dict={}, library:str="torch") -> Optimizer:
-    """
-    Returns instance of optimizer.
-
-    Inputs:
-        name:str - name of optimizer, e.g AdamW, SGD, RMSprop.
-        parameters:dict - parameters of optimizer, e.g lr, weight_decay. Default: {}.
-        module_parameters:Any - module's parameters to optimize.
-        library:str - library from which the optimizer will be used. Possible values: ["torch", "transformers", "bitsandbytes"]. Default: "torch".
-    
-    Returns:
-        optimizer:Optimizer - instance of optimizer.
-
-    """
-
-
-    library = OptimizerLibrary(library)
-
-    if library == OptimizerLibrary.TORCH:
-        module = optim
-
-    elif library == OptimizerLibrary.TRANSFORMERS:
-        if is_transformers_available():
-            module = transformers
-        else:
-            raise ValueError(f"Library `{library}` is not found or not provided.")
-
-    elif library == OptimizerLibrary.BITSANDBYTES:
-        if is_bitsandbytes_available():
-            module = bnb.optim
-        else:
-            raise ValueError(f"Library `{library}` is not found or not provided.")
-
-    optimizer = __get_from_library(library=module, 
-                                   name=name, 
-                                   parameters=parameters, 
-                                   params=module_parameters)
-
-    return optimizer
-
-
-def get_bitsandbytes_optimizer(module:nn.Module, 
-                               name:str,
-                               module_parameters=None,  
-                               parameters:dict={}, 
-                               layers_optim_bits=[32], 
-                               layers=[nn.Embedding], 
-                               verbose=False):
-
-    if module_parameters is None:
-        module_parameters = module.parameters()
-
-    optimizer = get_optimizer(module_parameters=module_parameters, 
-                              name=name, 
-                              parameters=parameters, 
-                              library="bitsandbytes")
-
-    for layer, layer_optim_bits in zip(layers, layers_optim_bits):
-        set_layer_optim_bits(module=module, optim_bits=layer_optim_bits, layer=layer)
-
-        if verbose:
-            print(f"Changed precision of {layer} to {layer_optim_bits}.")
-
-    return optimizer
 
 
 def concat_tensors_with_padding(tensors:List[torch.Tensor], 
@@ -450,23 +208,3 @@ def concat_tensors_with_padding(tensors:List[torch.Tensor],
     padded_tensors = torch.cat(padded_tensors, dim=0)
 
     return padded_tensors
-
-
-def is_cuda_available():
-    return torch.cuda.is_available()
-
-def is_cpu_available():
-    return os.cpu_count() > 0
-
-def is_tpu_available():
-    if is_torch_xla_available():
-        devices = xm.get_xla_supported_devices()
-        return len(devices) > 0
-    else:
-        return False
-        
-def is_mps_available():
-    if is_torch_backend_mps_available():
-        return torch.backends.mps.is_available()
-    
-    return False

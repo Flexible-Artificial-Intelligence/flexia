@@ -14,6 +14,8 @@
 
 
 from torch import nn
+from typing import List
+
 from .import_utils import is_bitsandbytes_available
 
 
@@ -21,7 +23,22 @@ if is_bitsandbytes_available():
     import bitsandbytes as bnb
 
 
-def set_layer_optim_bits(model:nn.Module, optim_bits:int=32, layer:nn.Module=nn.Embedding) -> None:
+def set_layers_precisions(module:nn.Module, 
+                          layers:List[nn.Module]=[nn.Embedding], 
+                          precisions:List[int]=[32]
+                          ) -> None:
+                          
+    assert len(layers) == len(precisions)
+
+    for layer, precision in zip(layers, precisions):
+        set_layer_precision(module=module, layer=layer, precision=precision)
+
+
+
+def set_layer_precision(module:nn.Module, 
+                        layer:nn.Module=nn.Embedding, 
+                        precision:int=32
+                        ) -> None:
     """
     Overrides keeping bits for given layer.
 
@@ -32,7 +49,7 @@ def set_layer_optim_bits(model:nn.Module, optim_bits:int=32, layer:nn.Module=nn.
         
     """
     
-    for module in model.modules():
-        if isinstance(module, layer):
-            module_instance = bnb.optim.GlobalOptimManager.get_instance()
-            module_instance.register_module_override(module, "weight", {"optim_bits": optim_bits})
+    for submodule in module.modules():
+        if isinstance(submodule, layer):
+            submodule_instance = bnb.optim.GlobalOptimManager.get_instance()
+            submodule_instance.register_module_override(submodule, "weight", {"optim_bits": precision})

@@ -16,6 +16,6 @@
 from ..enums import ExplicitEnum, EqualEnum
 
 
-class Modes(ExplicitEnum, EqualEnum):
+class Mode(ExplicitEnum, EqualEnum):
     MIN = "min"
     MAX = "max"

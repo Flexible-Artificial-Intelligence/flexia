@@ -18,47 +18,44 @@ import gc
 import re
 import numpy as np
 import torch
-from typing import Union
+from typing import Union, Dict, Optional
 
 from .callback import Callback
-from ..utils import save_checkpoint
+from ..utils import save_checkpoint, default_checkpoint_custom_keys
 from ..trainer.enums import TrainerState
 from .utils import get_delta_value, compare
 from ..python_utils import remove_files_from_directory
 from ..enums import IntervalStrategy
-from .enums import Modes
+from ..module_utils import save_module
+from .enums import Mode
 
 
 class ModelCheckpoint(Callback):  
     def __init__(self, 
-                 monitor_value="validation_loss",
-                 mode:str="min", 
+                 monitor_value:str="validation_loss",
+                 mode:Union[Mode, str]="min", 
                  delta:Union[float, int]=0.0, 
                  directory:str="./", 
                  overwriting:bool=False, 
                  filename_format:str="checkpoint.pt", 
                  num_candidates:Union[str, float, int]=1, 
-                 save_model_on_end=False,
-                 model_path=None,
-                 save_optimizer_state=True, 
-                 save_scheduler_state=True, 
-                 save_scaler_state=False,
-                 custom_keys={
-                    "model": "model_state",  
-                    "optimizer": "optimizer_state", 
-                    "scheduler": "scheduler_state", 
-                    "scaler": "scaler_state",
-                }, 
-                save_checkpoint_on_exception=False, 
-                save_interval=None, 
-                save_interval_strategy="off", 
-                save_interval_directory=None, 
-                save_interval_filename_format=None):
+                 save_model_on_end:bool=False,
+                 model_path:bool=None,
+                 save_optimizer_state:bool=True, 
+                 save_scheduler_state:bool=True, 
+                 save_scaler_state:bool=False,
+                 custom_keys:Dict[str, str]=default_checkpoint_custom_keys, 
+                 save_checkpoint_on_exception:bool=False, 
+                 on_exception_filename_format:Optional[str]=None,
+                 save_interval:Optional[int]=None, 
+                 save_interval_strategy:Union[IntervalStrategy, str]="off", 
+                 save_interval_directory:Optional[str]=None, 
+                 save_interval_filename_format:Optional[str]=None):
         
         super().__init__()
 
         self.monitor_value = monitor_value
-        self.mode = Modes(mode)
+        self.mode = Mode(mode)
         self.delta = delta
         self.directory = directory
         self.overwriting = overwriting
@@ -76,7 +73,7 @@ class ModelCheckpoint(Callback):
         self.save_interval_directory = save_interval_directory
         self.save_interval_filename_format = save_interval_filename_format
         
-        self.best_value = np.inf if self.mode == Modes.MIN else -np.inf
+        self.best_value = np.inf if self.mode == Mode.MIN else -np.inf
         
         if isinstance(self.num_candidates, str):
             if self.num_candidates != "all":
@@ -228,11 +225,6 @@ class ModelCheckpoint(Callback):
 
         return checkpoint_path, checkpoint
 
-    def save_model(self, trainer, path):
-        model_state = trainer.model.state_dict()
-        saved_state = torch.save(model_state, path)
-
-
     def on_exception(self, trainer):
         if self.save_checkpoint_on_exception:
             filename_format = "last_checkpoint_step_{step}_epoch_{epoch}.pt"
@@ -241,4 +233,4 @@ class ModelCheckpoint(Callback):
     
     def on_training_end(self, trainer) -> None:
         if self.save_model_on_end:
-            self.save_model(trainer=trainer, path=self.model_path)
+            save_module(module=trainer.model, path=self.model_path)

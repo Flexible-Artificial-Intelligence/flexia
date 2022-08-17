@@ -4,7 +4,7 @@ from typing import Dict, Optional, List
 
 
 from ..import_utils import is_spacy_available, is_seaborn_available, is_matplotlib_available
-from ..utils import get_stepped_lrs
+from ..optimization_utils import get_stepped_lrs
 
 
 if is_matplotlib_available():

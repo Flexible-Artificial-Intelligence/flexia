@@ -19,7 +19,7 @@ import numpy as np
 from ..trainer.enums import TrainerState
 from .callback import Callback
 from .utils import compare, get_delta_value
-from .enums import Modes
+from .enums import Mode
 
 
 class EarlyStopping(Callback):  
@@ -35,7 +35,7 @@ class EarlyStopping(Callback):
         super().__init__()
 
         self.monitor_value = monitor_value
-        self.mode = Modes(mode)
+        self.mode = Mode(mode)
         self.delta = delta
         self.patience = patience
         self.stopping_threshold = stopping_threshold
@@ -45,7 +45,7 @@ class EarlyStopping(Callback):
         self.stop = False
         self.case = None
         self.fails = 0
-        self.best_value = np.inf if self.mode == Modes.MIN else -np.inf
+        self.best_value = np.inf if self.mode == Mode.MIN else -np.inf
         
         if self.patience < 0:
             raise ValueError(f"`patience` must be in range (0, +inf), but given {self.patience}.")

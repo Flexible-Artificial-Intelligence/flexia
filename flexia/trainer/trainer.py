@@ -25,14 +25,15 @@ import warnings
 import math
 import gc
 
-from .enums import GradientClippingStrategy, TrainerState
+from .enums import TrainerState
 from ..timer import Timer
 from ..averager import Averager
 from ..loggers import Logger
 from ..callbacks import Callback
-from ..utils import get_lr, precision_dtypes, seed_everything, mixed_precision_dtypes
+from ..optimization_utils import get_lr
+from ..utils import precision_dtypes, mixed_precision_dtypes, seed_everything
 from ..third_party.addict import Dict
-from ..enums import Precision, IntervalStrategy, DeviceType
+from ..enums import Precision, IntervalStrategy, DeviceType, GradientClippingStrategy
 from ..hooks.utils import run_hook, exception_handler
 from ..import_utils import is_torch_xla_available
 from ..callbacks import Callbacks
@@ -55,12 +56,13 @@ class Trainer(ABC):
                  scheduler:Optional[lr_scheduler._LRScheduler]=None, 
                  scheduling_strategy:str="step", 
                  gradient_accumulation_steps:int=1, 
+                 scale_loss_after_gradient_accumulation=False,
                  gradient_scaling:bool=False, 
                  scaler:Optional["GradScaler"]=None,
                  precision="fp32",
                  gradient_clipping_strategy="off",
                  gradient_clipping_value:float=None, 
-                 accelerator:Optional[Union[str, torch.device]]="cpu", 
+                 accelerator:Optional[Union[str, torch.device]]="cpu:0", 
                  validation_strategy:str="epoch",
                  validation_steps:int=1, 
                  epochs:int=1, 
@@ -74,6 +76,7 @@ class Trainer(ABC):
         self.scheduler = scheduler
         self.scheduling_strategy = IntervalStrategy(scheduling_strategy)
         self.gradient_accumulation_steps = gradient_accumulation_steps
+        self.scale_loss_after_gradient_accumulation = scale_loss_after_gradient_accumulation
         self.gradient_scaling = gradient_scaling
         self.precision = Precision(precision)
         self.gradient_clipping_strategy = GradientClippingStrategy(gradient_clipping_strategy)
@@ -204,22 +207,19 @@ class Trainer(ABC):
                 self.history["epoch"] = epoch
                 self.history["step"] += 1
                 self.history["step_epoch"] = step
+
+                lr = self.get_lr()
                 
                 batch_size = len(batch)
                 
                 self.state = TrainerState.TRAINING_STEP_START
 
-                batch_loss, batch_metrics = self.train_one_step(model=model, batch=batch)
+                batch_loss, batch_metrics = self.train_one_step(model=model, 
+                                                                batch=batch, 
+                                                                step=step, 
+                                                                steps=steps)
 
-                lr = self.get_lr()
-
-                if (step % self.gradient_accumulation_steps == 0) or (step == steps):
-                    self.optimization_step(model)
-
-                    if self.scheduling_strategy == IntervalStrategy.STEP:
-                        self.scheduling_step(loop="training")
-
-                if self.gradient_accumulation_steps > 1:
+                if self.gradient_accumulation_steps > 1 and self.scale_loss_after_gradient_accumulation:
                     batch_loss = batch_loss * self.gradient_accumulation_steps
 
                 train_loss.update(batch_loss.item(), n=batch_size)
@@ -325,7 +325,7 @@ class Trainer(ABC):
                     self.scheduler.step()
 
                     
-    def train_one_step(self, model, batch:Any) -> Tuple[torch.Tensor, dict]:
+    def train_one_step(self, model, batch:Any, step, steps) -> Tuple[torch.Tensor, dict]:
         model.train()
         with self.context_manager():
             batch_loss, batch_metrics, *batch_outputs = self.training_step(model=model, batch=batch)
@@ -334,6 +334,12 @@ class Trainer(ABC):
                 batch_loss /= self.gradient_accumulation_steps
             
             batch_loss = self.backward_step(loss=batch_loss)
+
+        if (step % self.gradient_accumulation_steps == 0) or (step == steps):
+            self.optimization_step(model)
+
+            if self.scheduling_strategy == IntervalStrategy.STEP:
+                self.scheduling_step(loop="training")
 
         return batch_loss.detach(), batch_metrics
                 

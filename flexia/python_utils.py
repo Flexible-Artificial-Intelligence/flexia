@@ -1,6 +1,6 @@
 import os
 import shutil
-
+import random
 
 
 def read_file(path:str, mode:str="r"):
@@ -40,3 +40,11 @@ def remove_files_from_directory(directory:str, verbose=False) -> None:
 
         if verbose:
             print(f"Removed '{path}' from '{directory}'.")
+
+
+def get_random_number(min_value:int=0, max_value:int=50) -> int:
+    """
+    Returns random value from [`min_value`, `max_value`] range.
+    """
+    
+    return random.randint(min_value, max_value)

@@ -14,6 +14,8 @@
 
 
 from .logger import Logger
+from typing import Any, Dict, List, Optional
+
 from ..import_utils import is_wandb_available
 
 
@@ -23,12 +25,11 @@ if is_wandb_available():
 
 class WANDBLogger(Logger):
     def __init__(self, 
-                 api_key=None, 
-                 finish=True, 
-                 log_accelerator_stats=False, 
-                 summary_values={},
-                 on_epoch=True,
-                 on_batch=True,
+                 api_key:Optional[str]=None, 
+                 finish:bool=True, 
+                 summary_values:Dict[str, Dict[str, Any]]=None,
+                 on_epoch:bool=True,
+                 on_batch:bool=True,
                  **kwargs):
 
         super().__init__()     
@@ -36,13 +37,17 @@ class WANDBLogger(Logger):
         self.api_key = api_key
         self.finish = finish
         self.summary_values = summary_values
-        self.log_accelerator_stats = log_accelerator_stats
         self.on_epoch = on_epoch
         self.on_batch = on_batch
         self.kwargs = kwargs
 
         if self.api_key is not None:
             wandb.login(key=self.api_key)
+
+        if self.summary_values is not None:
+            for summary_name, summary_arguments in self.summary_values.items():
+                wandb.define_metric(name=summary_name, **summary_arguments)
+
 
         wandb.init(**self.kwargs)
         print(f"Weights & Biases Run URL: {wandb.run.get_url()}")

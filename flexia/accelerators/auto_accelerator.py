@@ -1,5 +1,5 @@
 from . import *
-from ..utils import initialize_device
+from ..device_utils import initialize_device
 from ..enums import DeviceType
 from .enums import MemoryUnit
 

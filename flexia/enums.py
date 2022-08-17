@@ -61,3 +61,9 @@ class DeviceType(ExplicitEnum, EqualEnum):
     def _missing_(cls, value):
         keys = list(cls._value2member_map_.keys())
         raise ValueError(f"Device type `{value}` is not supported yet. Please, change to one of `{keys}`.")
+
+
+class GradientClippingStrategy(ExplicitEnum, EqualEnum):
+    NORM = "norm"
+    VALUE = "value"
+    OFF = "off"

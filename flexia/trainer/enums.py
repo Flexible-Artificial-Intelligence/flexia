@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from ..enums import EqualEnum, ExplicitEnum
+from ..enums import EqualEnum
 
 
 class TrainerState(EqualEnum):
@@ -36,9 +36,3 @@ class TrainerState(EqualEnum):
     PREDICTION_END = "on_prediction_end"
     PREDICTION_STEP_START = "on_prediction_step_start"
     PREDICTION_STEP_END = "on_prediction_step_end"
-
-
-class GradientClippingStrategy(ExplicitEnum, EqualEnum):
-    NORM = "norm"
-    VALUE = "value"
-    OFF = "off"

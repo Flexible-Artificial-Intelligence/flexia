@@ -1,10 +1,10 @@
 import torch
 
 from .accelerator import Accelerator
-from ..enums import DeviceType
 from .utils import convert_bytes
+from ..enums import DeviceType
 from ..import_utils import is_pynvml_available
-from ..utils import is_cuda_available
+from ..device_utils import is_cuda_available
 
 if is_pynvml_available():
     from pynvml import nvmlInit, nvmlDeviceGetHandleByIndex, nvmlDeviceGetMemoryInfo

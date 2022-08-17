@@ -6,7 +6,7 @@ import re
 
 from .accelerator import Accelerator
 from .utils import convert_bytes
-from ..utils import is_cpu_available
+from ..device_utils import is_cpu_available
 
 
 class CPUAccelerator(Accelerator):

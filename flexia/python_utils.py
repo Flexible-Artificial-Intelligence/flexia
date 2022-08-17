@@ -1,16 +1,17 @@
 import os
 import shutil
 import random
+from typing import Any
 
 
-def read_file(path:str, mode:str="r"):
+def read_file(path: str, mode: str = "r") -> Any:
     with open(path, mode) as file:
         data = file.read()
 
     return data
 
 
-def make_directory(directory, overwriting=False):
+def make_directory(directory: str, overwriting: bool = False) -> str:
     """
     Makes directory
     """
@@ -24,7 +25,7 @@ def make_directory(directory, overwriting=False):
     return directory
 
 
-def remove_files_from_directory(directory:str, verbose=False) -> None:
+def remove_files_from_directory(directory: str, verbose: bool = False) -> None:
     """
     Removes all files and folders from directory.
     """
@@ -42,7 +43,7 @@ def remove_files_from_directory(directory:str, verbose=False) -> None:
             print(f"Removed '{path}' from '{directory}'.")
 
 
-def get_random_number(min_value:int=0, max_value:int=50) -> int:
+def get_random_number(min_value: int = 0, max_value: int = 50) -> int:
     """
     Returns random value from [`min_value`, `max_value`] range.
     """

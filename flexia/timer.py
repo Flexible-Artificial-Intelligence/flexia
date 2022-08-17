@@ -18,7 +18,7 @@ from typing import Tuple
 
 
 class Timer:
-    def __init__(self):
+    def __init__(self) -> None:
         self.start = datetime.now()
         self.remain_time = timedelta(seconds=0)
 
@@ -26,7 +26,7 @@ class Timer:
     def elapsed_time(self) -> timedelta:
         return datetime.now() - self.start
 
-    def __call__(self, fraction:float) -> Tuple[timedelta, timedelta]:                
+    def __call__(self, fraction: float) -> Tuple[timedelta, timedelta]:                
         elapsed_seconds = self.elapsed_time.total_seconds()        
         total_seconds = timedelta(seconds=round(elapsed_seconds / fraction))
         self.remain_time = total_seconds - self.elapsed_time

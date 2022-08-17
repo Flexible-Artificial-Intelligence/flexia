@@ -1,16 +1,19 @@
+from typing import Optional, List
+
 from .logger import Logger
 from ..third_party.pkbar import Kbar, Pbar
 
 
 class KerasLogger(Logger):
     def __init__(self, 
-                 width=20, 
-                 verbose=1, 
-                 interval=0.05, 
-                 stateful_metrics=None, 
-                 always_stateful=False, 
-                 unit_name="step", 
-                 log_accelerator_stats=False):
+                 width: int = 20, 
+                 verbose: int = 1, 
+                 interval: float = 0.05, 
+                 stateful_metrics: Optional[List[str]] = None, 
+                 always_stateful: bool = False, 
+                 unit_name: str = "step", 
+                 log_accelerator_stats: bool = False
+                 ) -> None:
 
         super().__init__()
 

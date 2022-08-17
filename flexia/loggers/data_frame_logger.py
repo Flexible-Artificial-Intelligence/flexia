@@ -1,5 +1,4 @@
 from .logger import Logger
-
 from ..import_utils import is_pandas_available
 
 

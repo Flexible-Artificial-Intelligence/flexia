@@ -13,18 +13,18 @@
 # limitations under the License.
 
 
-from flexia.accelerators import accelerator
 from .logger import Logger
 from .utils import format_accelerator_stats, format_metrics, format_time
 
 
 class PrintLogger(Logger):
     def __init__(self, 
-                 verbose:int=1, 
-                 decimals:int=3, 
-                 sep=" - ", 
-                 time_format:str="{hours:02d}:{minutes:02d}:{seconds:02d}", 
-                 log_accelerator_stats=False) -> None:
+                 verbose: int = 1, 
+                 decimals: int = 3, 
+                 sep:str = " - ", 
+                 time_format: str = "{hours:02d}:{minutes:02d}:{seconds:02d}", 
+                 log_accelerator_stats: bool = False
+                 ) -> None:
         
         super().__init__()
 
@@ -34,7 +34,7 @@ class PrintLogger(Logger):
         self.sep = sep
         self.log_accelerator_stats = log_accelerator_stats
 
-    def get_accelerator_stats_string(self, trainer):
+    def get_accelerator_stats_string(self, trainer) -> str:
         if self.log_accelerator_stats:
             accelerator = trainer.accelerator
             accelerator_string = format_accelerator_stats(accelerator=accelerator, 
@@ -47,7 +47,7 @@ class PrintLogger(Logger):
         
         return accelerator_string
     
-    def on_training_step_end(self, trainer):
+    def on_training_step_end(self, trainer) -> None:
         step = trainer.history["step_epoch"]
         steps = trainer.history["steps_epoch"]
 
@@ -76,7 +76,7 @@ class PrintLogger(Logger):
                   f"{accelerator_string}")
 
 
-    def on_validation_step_end(self, trainer):
+    def on_validation_step_end(self, trainer) -> None:
         step = trainer.history["validation_step"]
         steps = trainer.history["steps_validation"]
 
@@ -100,7 +100,7 @@ class PrintLogger(Logger):
                   f"{accelerator_string}")
 
 
-    def on_prediction_step_end(self, trainer):
+    def on_prediction_step_end(self, trainer) -> None:
         step = trainer.history["prediction_step"]
         steps = trainer.history["prediction_steps"]
 

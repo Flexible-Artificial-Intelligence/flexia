@@ -15,13 +15,17 @@
 
 import logging
 from datetime import timedelta
+from typing import Any, Dict, Union, Optional
+
+from ..accelerators import Accelerator
 
 
-def get_logger(name=__name__, 
-               path="logs.log", 
-               logs_format="%(message)s", 
-               stream_handler=True, 
-               level=logging.INFO) -> logging.Logger:
+def get_logger(name: str = __name__, 
+               path: str = "logs.log", 
+               logs_format: str = "%(message)s", 
+               stream_handler: bool = True, 
+               level=logging.INFO,
+               ) -> logging.Logger:
 
     logger = logging.getLogger(name)
     logger.setLevel(level)
@@ -43,13 +47,16 @@ def get_logger(name=__name__,
     return logger
 
 
-def format_metrics(metrics, sep=" - ", decimals=4) -> str:
+def format_metrics(metrics: Dict[str, Any], 
+                   sep: str = " - ", 
+                   decimals: int = 4
+                   ) -> str:
     string = sep.join([f"{metric}: {value:.{decimals}f}" for metric, value in metrics.items()])
     string = sep + string if string != "" else string
     return string
 
 
-def format_time(time:timedelta, time_format:str="{hours:02d}:{minutes:02d}:{seconds:02d}") -> str:
+def format_time(time: timedelta, time_format: str = "{hours:02d}:{minutes:02d}:{seconds:02d}") -> str:
     """
     Formats `timedelta` to user's time format.
     """
@@ -57,7 +64,7 @@ def format_time(time:timedelta, time_format:str="{hours:02d}:{minutes:02d}:{seco
     return time_format.format(**time)
 
 
-def get_time_from_timedelta(delta:timedelta) -> dict:
+def get_time_from_timedelta(delta: timedelta) -> Dict[str, Union[int, float]]:
     time = {"days": delta.days}
     time["hours"], rem = divmod(delta.seconds, 3600)
     time["minutes"], time["seconds"] = divmod(rem, 60)
@@ -65,7 +72,10 @@ def get_time_from_timedelta(delta:timedelta) -> dict:
     return time
 
 
-def format_accelerator_stats(accelerator=None, sep=" - ", add_sep_before=False):
+def format_accelerator_stats(accelerator: Optional[Accelerator] = None, 
+                             sep:str = " - ", 
+                             add_sep_before: bool = False
+                             ) -> str:
     string = ""
     if accelerator is not None:
         data = accelerator.stats

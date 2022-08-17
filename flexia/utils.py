@@ -17,37 +17,42 @@ import torch
 from torch import nn
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
+from torch.cuda.amp import GradScaler
 from torch.nn import functional as F
 import numpy as np
-from typing import Union, Optional, List, Union, Tuple, Dict
+from typing import Any, Union, Optional, List, Union, Tuple, Dict as TypingDict
 import random
 
 
 from .import_utils import is_torch_xla_available
 from .python_utils import get_random_number
 from .enums import DeviceType
+from .third_party.addict import Dict
 
 
 if is_torch_xla_available():
     import torch_xla.core.xla_model as xm
 
 
-precision_dtypes = {
+precision_dtypes = Dict({
     "fp32": torch.float32,
     "fp16": torch.float16,
     "bf16": torch.bfloat16,
-}
+})
 
 mixed_precision_dtypes = ("fp16", "bf16")
-default_checkpoint_custom_keys = {
+default_checkpoint_custom_keys = Dict({
     "model": "model_state",
     "optimizer": "optimizer_state",
     "scheduler": "scheduler_state",
     "scaler": "scaler_state",
-}
+})
 
 
-def seed_everything(seed:Optional[int]=None, deterministic:int=True, benchmark:int=True) -> int:
+def seed_everything(seed: Optional[int] = None, 
+                    deterministic: bool = True, 
+                    benchmark: bool = True
+                    ) -> int:
     """
     Sets seed for `torch`, `numpy` and `random` libraries to have opportunity to reproduce results.
     """
@@ -67,15 +72,16 @@ def seed_everything(seed:Optional[int]=None, deterministic:int=True, benchmark:i
     return seed
 
 
-def load_checkpoint(path:str, 
-                    model:nn.Module=None, 
-                    optimizer:Optional[Optimizer]=None, 
-                    scheduler:Optional[_LRScheduler]=None, 
-                    scaler=None,
-                    strict:bool=True,  
-                    custom_keys:Optional[Dict[str, str]]=default_checkpoint_custom_keys, 
-                    eval_mode=False, 
-                    load_states=True) -> dict:
+def load_checkpoint(path: str, 
+                    model: Optional[nn.Module] = None, 
+                    optimizer: Optional[Optimizer] = None, 
+                    scheduler: Optional[_LRScheduler] = None, 
+                    scaler:Optional[GradScaler] = None,
+                    strict: bool = True,  
+                    custom_keys: TypingDict[str, str] = default_checkpoint_custom_keys, 
+                    eval_mode: bool = False, 
+                    load_states: bool = True,
+                    ) -> TypingDict[str, Any]:
 
         """
         Loads checkpoint and then load state for model, optimizer or scheduler, if they are set. 
@@ -130,14 +136,14 @@ def load_checkpoint(path:str,
         return checkpoint
 
 
-def save_checkpoint(path:str, 
-                    model:nn.Module=None, 
-                    optimizer:Optional[Optimizer]=None, 
-                    scheduler:Optional[_LRScheduler]=None, 
-                    scaler=None,
-                    custom_keys:Optional[Dict[str, str]]=default_checkpoint_custom_keys,
-                    device_type:Union[DeviceType, str]="cpu",
-                    **kwargs
+def save_checkpoint(path: str, 
+                    model: Optional[nn.Module] = None, 
+                    optimizer: Optional[Optimizer] = None, 
+                    scheduler: Optional[_LRScheduler] = None, 
+                    scaler: Optional[GradScaler] = None,
+                    custom_keys: TypingDict[str, str] = default_checkpoint_custom_keys,
+                    device_type: Union[DeviceType, str] = "cpu",
+                    **kwargs,
                     ) -> str:
         
     device_type = DeviceType(device_type)
@@ -168,9 +174,10 @@ def save_checkpoint(path:str,
     return path
 
 
-def concat_tensors_with_padding(tensors:List[torch.Tensor], 
-                                padding:Union[int, float]=0,
-                                dim=1) -> torch.Tensor:
+def concat_tensors_with_padding(tensors: List[torch.Tensor], 
+                                padding: Union[int, float]=0.0,
+                                dim: int = 1,
+                                ) -> torch.Tensor:
     """
     Concatenate the list of tensors to be a single tensor with paddings.
     

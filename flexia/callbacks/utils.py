@@ -13,17 +13,25 @@
 # limitations under the License.
 
 
+from typing import Any, Union
+
 from .enums import Mode
 
 
-def get_delta_value(value, delta=0.0, mode="min"):
+def get_delta_value(value: Any, 
+                    delta: float = 0.0, 
+                    mode: Union[Mode, str] = "min"
+                    ) -> Any:
     mode = Mode(mode)
     delta_value = (value - delta) if mode == Mode.MIN else (value + delta)
     
     return delta_value
 
 
-def compare(value, other, mode="min"):
+def compare(value: Any, 
+            other: Any, 
+            mode: Union[Mode, str] = "min"
+            ) -> bool:
     mode = Mode(mode)
     condition = (value < other) if mode == Mode.MIN else (value > other)
     

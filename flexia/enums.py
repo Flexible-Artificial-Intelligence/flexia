@@ -18,13 +18,13 @@ from enum import Enum
 
 class ExplicitEnum(Enum):
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value: str) -> None:
         keys = list(cls._value2member_map_.keys())
         raise ValueError(f"`{value}` is not a valid or not supported `{cls.__name__}`, select one of `{keys}`.")
 
 
 class EqualEnum(Enum):
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: Enum) -> bool:
         return self.value == other.value
 
 
@@ -58,7 +58,7 @@ class DeviceType(ExplicitEnum, EqualEnum):
     MPS = "mps"
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value: str) -> None:
         keys = list(cls._value2member_map_.keys())
         raise ValueError(f"Device type `{value}` is not supported yet. Please, change to one of `{keys}`.")
 

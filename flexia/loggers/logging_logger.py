@@ -20,15 +20,16 @@ from .utils import format_time, get_logger, format_metrics, format_accelerator_s
 
 class LoggingLogger(Logger):
     def __init__(self, 
-                 name="logger", 
-                 path="logs.log", 
-                 logs_format:str="%(message)s", 
-                 verbose:int=1, 
-                 decimals=4, 
-                 sep=" - ",
-                 level=logging.INFO, 
-                 time_format:str="{hours:02d}:{minutes:02d}:{seconds:02d}", 
-                 log_accelerator_stats=False) -> None:
+                 name: str = "logger", 
+                 path: str = "logs.log", 
+                 logs_format: str = "%(message)s", 
+                 verbose: int = 1, 
+                 decimals: int = 4, 
+                 sep: str = " - ",
+                 level = logging.INFO, 
+                 time_format: str = "{hours:02d}:{minutes:02d}:{seconds:02d}", 
+                 log_accelerator_stats: bool = False
+                 ) -> None:
 
         super().__init__()
 
@@ -49,7 +50,7 @@ class LoggingLogger(Logger):
                                  level=self.level) 
 
 
-    def get_accelerator_stats_string(self, trainer):
+    def get_accelerator_stats_string(self, trainer) -> str:
         if self.log_accelerator_stats:
             accelerator = trainer.accelerator
             accelerator_string = format_accelerator_stats(accelerator=accelerator, 
@@ -62,7 +63,7 @@ class LoggingLogger(Logger):
         
         return accelerator_string
 
-    def on_training_step_end(self, trainer):
+    def on_training_step_end(self, trainer) -> None:
         step = trainer.history["step_epoch"]
         steps = trainer.history["steps_epoch"]
 
@@ -90,7 +91,7 @@ class LoggingLogger(Logger):
                              f"{accelerator_string}")
 
 
-    def on_validation_step_end(self, trainer):
+    def on_validation_step_end(self, trainer) -> None:
         step = trainer.history["validation_step"]
         steps = trainer.history["steps_validation"]
 
@@ -114,7 +115,7 @@ class LoggingLogger(Logger):
                              f"{accelerator_string}")
 
 
-    def on_prediction_step_end(self, trainer):
+    def on_prediction_step_end(self, trainer) -> None:
         step = trainer.history["prediction_step"]
         steps = trainer.history["prediction_steps"]
 

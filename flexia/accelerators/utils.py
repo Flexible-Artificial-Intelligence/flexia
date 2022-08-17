@@ -1,3 +1,5 @@
+from typing import Union
+
 from .enums import MemoryUnit
 
 
@@ -50,7 +52,10 @@ convert_gb_to_tb = convert_gigabytes_to_terabytes
 
 
 # general converter
-def convert_bytes(bytes, from_unit="KB", to_unit="KB"):
+def convert_bytes(bytes: float, 
+                  from_unit: Union[MemoryUnit, str] = "KB", 
+                  to_unit: Union[MemoryUnit, str] = "KB"
+                  ) -> float:
     from_unit = MemoryUnit(from_unit)
     to_unit = MemoryUnit(to_unit)
     

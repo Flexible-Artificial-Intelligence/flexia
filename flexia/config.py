@@ -14,6 +14,7 @@
 
 
 import json
+from typing import Any
 
 from .third_party.addict import Dict
 
@@ -22,23 +23,23 @@ class Config(Dict):
     def to_json_string(self) -> str:
         return json.dumps(self)
     
-    def to_json(self, path:str) -> str:
+    def to_json(self, path: str) -> str:
         with open(path, "w", encoding="utf-8") as file:
             data = self.to_json_string()
             file.write(data)
         
         return path
     
-    def from_json_string(self, string:str) -> dict:
+    def from_json_string(self, string: str) -> "Config":
         return Config(json.loads(string))
     
-    def from_json(self, path:str) -> "Config":
+    def from_json(self, path: str) -> "Config":
         with open(path, "r", encoding="utf-8") as file:
             self = self.from_json_string(file.read())
         
         return self
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> Any:
         if key not in self:
             raise KeyError(key)
         

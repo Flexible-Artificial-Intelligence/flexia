@@ -17,13 +17,14 @@ if is_spacy_available():
     import spacy
 
 
-def display_text(text:str, 
-                 entities:Optional[List[str]]=None, 
-                 spans:Optional[List[List[int]]]=None, 
-                 colors:Dict[str, str]={}, 
-                 title:Optional[str]=None, 
+def display_text(text: str, 
+                 entities: Optional[List[str]] = None, 
+                 spans: Optional[List[List[int]]] = None, 
+                 colors: Dict[str, str] = {}, 
+                 title: Optional[str] = None, 
                  *args, 
-                 **kwargs) -> None:
+                 **kwargs,
+                 ) -> None:
     ents = []
     if entities is not None and spans is not None:
         for (start, end), entity in zip(spans, entities):
@@ -39,11 +40,11 @@ def display_text(text:str,
     spacy.displacy.render(docs=document, options=options, *args, **kwargs)
 
 
-def plot_lr(optimizer:Optimizer, 
-            scheduler:Optional[_LRScheduler]=None, 
-            steps:int=100, 
-            only_last_group:bool=True, 
-            key:str="lr"
+def plot_lr(optimizer: Optimizer, 
+            scheduler: Optional[_LRScheduler] = None, 
+            steps:int = 100, 
+            only_last_group: bool = True, 
+            key: str = "lr",
             ) -> None:
             
     steps, groups_lrs = get_stepped_lrs(optimizer=optimizer, 

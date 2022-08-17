@@ -33,7 +33,7 @@ from ..callbacks import Callback
 from ..optimization_utils import get_lr
 from ..utils import precision_dtypes, mixed_precision_dtypes, seed_everything
 from ..third_party.addict import Dict
-from ..enums import Precision, IntervalStrategy, DeviceType, GradientClippingStrategy
+from ..enums import Precision, IntervalStrategy, DeviceType, GradientClippingStrategy, SchedulerLibrary
 from ..hooks.utils import run_hook, exception_handler
 from ..import_utils import is_torch_xla_available
 from ..callbacks import Callbacks
@@ -51,24 +51,25 @@ gc.enable()
 
 class Trainer(ABC):
     def __init__(self, 
-                 model:nn.Module, 
-                 optimizer:optim.Optimizer=None,
-                 scheduler:Optional[lr_scheduler._LRScheduler]=None, 
-                 scheduling_strategy:str="step", 
-                 gradient_accumulation_steps:int=1, 
-                 scale_loss_after_gradient_accumulation=False,
-                 gradient_scaling:bool=False, 
-                 scaler:Optional["GradScaler"]=None,
-                 precision="fp32",
-                 gradient_clipping_strategy="off",
-                 gradient_clipping_value:float=None, 
+                 model: nn.Module, 
+                 optimizer: Optional[optim.Optimizer]=None,
+                 scheduler: Optional[lr_scheduler._LRScheduler]=None, 
+                 scheduling_strategy: Union[IntervalStrategy, str] = "step", 
+                 gradient_accumulation_steps: int = 1, 
+                 scale_loss_after_gradient_accumulation: bool = False,
+                 gradient_scaling: bool = False, 
+                 scaler: Optional[GradScaler] = None,
+                 precision: Union[Precision, str] = "fp32",
+                 gradient_clipping_strategy: Union[GradientClippingStrategy, str] = "off",
+                 gradient_clipping_value: Optional[float] = None, 
                  accelerator:Optional[Union[str, torch.device]]="cpu:0", 
-                 validation_strategy:str="epoch",
-                 validation_steps:int=1, 
-                 epochs:int=1, 
-                 loggers:Optional[List["Logger"]]=None, 
-                 callbacks:Optional[List["Callback"]]=None, 
-                 seed=None) -> None:
+                 validation_strategy: Union[IntervalStrategy, str] = "epoch",
+                 validation_steps: Union[float, int] = 1, 
+                 epochs: int = 1, 
+                 loggers: Optional[List["Logger"]] = None, 
+                 callbacks: Optional[List["Callback"]] = None, 
+                 seed: Optional[int] = None,
+                 ) -> None:
         
         self.model = model
         self.model_wrapped = self.model

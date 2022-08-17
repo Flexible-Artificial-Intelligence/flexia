@@ -22,8 +22,9 @@ from ..trainer.enums import TrainerState
 
 class Timing(Callback):
     def __init__(self, 
-                 duration:Union[str, timedelta]="01:00:00:00", 
-                 duration_separator:str=":"):
+                 duration: Union[str, timedelta] = "01:00:00:00", 
+                 duration_separator: str = ":"
+                 ) -> None:
         
         super().__init__()
         
@@ -45,14 +46,14 @@ class Timing(Callback):
         self.stop = False
         
 
-    def on_epoch_end(self, trainer):
+    def on_epoch_end(self, trainer) -> None:
         elapsed = trainer.history["elapsed"]
         self.stop = self.check(elapsed)
         
         if self.stop:
             trainer.state = TrainerState.TRAINING_STOP
         
-    def check(self, elapsed) -> bool:       
+    def check(self, elapsed: timedelta) -> bool:       
         stop = elapsed > self.duration
         
         if stop:

@@ -13,18 +13,19 @@
 # limitations under the License.
 
 
-from typing import Union, Optional
+from typing import Any, Union, Optional
 from copy import deepcopy
+from typing import Dict as TypingDict, Any
 
 from .third_party.addict import Dict
 
 
 class Averager:
     def __init__(self, 
-                average:Union[int, float, dict]=0, 
-                sum_:Union[int, float, dict]=0, 
-                count:int=0, 
-                value:Optional[Union[float, int, dict]]=None):
+                average: Union[float, TypingDict[str, Any]] = 0.0, 
+                sum_: Union[float, TypingDict[str, Any]] = 0.0, 
+                count: int = 0, 
+                value: Optional[Union[int, TypingDict[str, Any]]] = None):
         """
         Computes statistics (sum, average, and count) for given values. 
         
@@ -52,14 +53,21 @@ class Averager:
         self.value = None
         
 
-    def sum_over_dictionary(self, input:dict, other:dict, n:int=1) -> dict:
+    def sum_over_dictionary(self, 
+                            input: dict, 
+                            other: dict, 
+                            n: int = 1
+                            ) -> TypingDict[str, Any]:
         input = deepcopy(input)
         for k, v in other.items():
             input[k] += v * n
         
         return input
 
-    def average_over_dictionary(self, input:dict, n:int=1) -> dict:
+    def average_over_dictionary(self, 
+                                input: dict, 
+                                n: int = 1
+                                ) -> TypingDict[str, Any]:
         input = deepcopy(input)
         for k in input:
             input[k] /= n
@@ -67,7 +75,10 @@ class Averager:
         return input
 
     
-    def update(self, value:Union[int, float, dict], n:int=1) -> None:
+    def update(self, 
+               value: Union[float, TypingDict[str, Any]], 
+               n: int = 1
+               ) -> None:
         """
         Updates statistics (average, count and sum).
         """

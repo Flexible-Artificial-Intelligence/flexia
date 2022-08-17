@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from typing import  Union, Optional
+from typing import  Any, Union, Optional
 import numpy as np
 
 from ..trainer.enums import TrainerState
@@ -24,13 +24,14 @@ from .enums import Mode
 
 class EarlyStopping(Callback):  
     def __init__(self, 
-                 monitor_value="validation_loss",
-                 mode:str="min", 
-                 delta:Union[float, int]=0.0, 
-                 patience:Union[float, int]=5, 
-                 stopping_threshold:Optional[float]=None, 
-                 check_finite:bool=False, 
-                 check_finite_during_training=False):
+                 monitor_value: str = "validation_loss",
+                 mode: Union[Mode, str] = "min", 
+                 delta: Union[float, int] = 0.0, 
+                 patience: Union[float, int] = 5, 
+                 stopping_threshold: Optional[float] = None, 
+                 check_finite: bool = False, 
+                 check_finite_during_training = False,
+                 ) -> None:
         
         super().__init__()
 
@@ -57,7 +58,7 @@ class EarlyStopping(Callback):
             raise ValueError(f"Early Stopping works only on validation loss and metrics.")
 
 
-    def on_validation_end(self, trainer):
+    def on_validation_end(self, trainer) -> None:
         value = trainer.history[self.monitor_value]
         self.check(value=value)
 
@@ -78,7 +79,7 @@ class EarlyStopping(Callback):
                 print(self.case)
 
     
-    def check(self, value) -> bool:               
+    def check(self, value: Any) -> bool:               
         delta_value = get_delta_value(value=value, delta=self.delta, mode=self.mode)
         
         if not self.stop:

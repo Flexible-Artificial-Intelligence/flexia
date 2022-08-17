@@ -23,9 +23,9 @@ if is_bitsandbytes_available():
     import bitsandbytes as bnb
 
 
-def set_layers_precisions(module:nn.Module, 
-                          layers:List[nn.Module]=[nn.Embedding], 
-                          precisions:List[int]=[32]
+def set_layers_precisions(module: nn.Module, 
+                          layers: List[nn.Module] = [nn.Embedding], 
+                          precisions: List[int] = [32],
                           ) -> None:
                           
     assert len(layers) == len(precisions)
@@ -35,9 +35,9 @@ def set_layers_precisions(module:nn.Module,
 
 
 
-def set_layer_precision(module:nn.Module, 
-                        layer:nn.Module=nn.Embedding, 
-                        precision:int=32
+def set_layer_precision(module: nn.Module, 
+                        layer: nn.Module = nn.Embedding, 
+                        precision: int = 32,
                         ) -> None:
     """
     Overrides keeping bits for given layer.

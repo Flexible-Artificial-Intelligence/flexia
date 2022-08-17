@@ -1,22 +1,21 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
 
 class Dataset:
-    def __init__(self):
+    def __init__(self) -> None:
         self.__n = 0
 
-    @abstractmethod
-    def __len__(self):
+    def __len__(self) -> int:
         pass
 
-    @abstractmethod
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> Any:
         pass
 
-    def __iter__(self):
+    def __iter__(self) -> "Dataset":
         return self
 
-    def __next__(self):
+    def __next__(self) -> Any:
         if self.__n > len(self):
             raise StopIteration
 

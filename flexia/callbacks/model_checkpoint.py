@@ -17,8 +17,7 @@ import os
 import gc
 import re
 import numpy as np
-import torch
-from typing import Union, Dict, Optional
+from typing import Any, Union, Dict, Optional, List, Tuple
 
 from .callback import Callback
 from ..utils import save_checkpoint, default_checkpoint_custom_keys
@@ -32,25 +31,25 @@ from .enums import Mode
 
 class ModelCheckpoint(Callback):  
     def __init__(self, 
-                 monitor_value:str="validation_loss",
-                 mode:Union[Mode, str]="min", 
-                 delta:Union[float, int]=0.0, 
-                 directory:str="./", 
-                 overwriting:bool=False, 
-                 filename_format:str="checkpoint.pt", 
-                 num_candidates:Union[str, float, int]=1, 
-                 save_model_on_end:bool=False,
-                 model_path:bool=None,
-                 save_optimizer_state:bool=True, 
-                 save_scheduler_state:bool=True, 
-                 save_scaler_state:bool=False,
-                 custom_keys:Dict[str, str]=default_checkpoint_custom_keys, 
-                 save_checkpoint_on_exception:bool=False, 
-                 on_exception_filename_format:Optional[str]=None,
-                 save_interval:Optional[int]=None, 
-                 save_interval_strategy:Union[IntervalStrategy, str]="off", 
-                 save_interval_directory:Optional[str]=None, 
-                 save_interval_filename_format:Optional[str]=None):
+                 monitor_value: str = "validation_loss",
+                 mode: Union[Mode, str]="min", 
+                 delta: Union[float, int]=0.0, 
+                 directory: str = "./", 
+                 overwriting: bool = False, 
+                 filename_format: str ="checkpoint.pt", 
+                 num_candidates: Union[str, float, int] = 1, 
+                 save_model_on_end: bool = False,
+                 model_path: Optional[bool] = None,
+                 save_optimizer_state: bool = True, 
+                 save_scheduler_state: bool = True, 
+                 save_scaler_state: bool = False,
+                 custom_keys: Dict[str, str] = default_checkpoint_custom_keys, 
+                 save_checkpoint_on_exception: bool = False, 
+                 on_exception_filename_format: Optional[str] = None,
+                 save_interval: Optional[int] = None, 
+                 save_interval_strategy: Union[IntervalStrategy, str] = "off", 
+                 save_interval_directory: Optional[str] = None, 
+                 save_interval_filename_format: Optional[str] = None):
         
         super().__init__()
 
@@ -74,6 +73,7 @@ class ModelCheckpoint(Callback):
         self.save_interval_filename_format = save_interval_filename_format
         
         self.best_value = np.inf if self.mode == Mode.MIN else -np.inf
+        self.best_checkpoint_path = None
         
         if isinstance(self.num_candidates, str):
             if self.num_candidates != "all":
@@ -104,13 +104,13 @@ class ModelCheckpoint(Callback):
         self.all_interval_candidates = []
     
     @classmethod
-    def check_filename_format_uniqueness(filename_format):
+    def check_filename_format_uniqueness(filename_format: str) -> bool:
         regex = '{([^"]*)}'
         results = re.findall(regex, filename_format)
 
         return len(results) > 0
     
-    def append_candidate(self, candidates_list, path) -> None:   
+    def append_candidate(self, candidates_list: List[str], path: str) -> None:   
         """
         Appends new candidate.
         """
@@ -121,7 +121,7 @@ class ModelCheckpoint(Callback):
         candidates_list.append(path)
         
     
-    def __select_candidates(self, candidates_list) -> None:
+    def __select_candidates(self, candidates_list: List[str]) -> None:
         """
         Deleted not selected candidates.
         """
@@ -138,7 +138,10 @@ class ModelCheckpoint(Callback):
             candidates_list = candidates_list[-self.num_candidates:]
                 
             
-    def format_filename(self, filename_format="checkpoint.pt", data={}) -> str:
+    def format_filename(self, 
+                        filename_format: str = "checkpoint.pt", 
+                        data: Dict[str, Any] = {}
+                        ) -> str:
         filename = filename_format.format(**data)            
         return filename
             
@@ -159,7 +162,7 @@ class ModelCheckpoint(Callback):
             self.append_candidate(candidates_list=self.all_candidates, path=checkpoint_path)
             
             self.best_value = value
-            trainer.history["best_checkpoint_path"] = checkpoint_path
+            self.best_checkpoint_path = checkpoint_path
             is_saved = True
 
             self.__select_candidates(candidates_list=self.all_candidates)
@@ -171,13 +174,14 @@ class ModelCheckpoint(Callback):
         return is_saved
 
 
-    def on_validation_end(self, trainer):
+    def on_validation_end(self, trainer) -> None:
         is_saved = self.check(trainer=trainer)
         if is_saved:
             trainer.state = TrainerState.CHECKPOINT_SAVE
 
 
-    def __check_interval(self, trainer, interval_strategy=IntervalStrategy.OFF):
+    def __check_interval(self, trainer, interval_strategy:Union[IntervalStrategy, str] = "off") -> None:
+        interval_strategy = IntervalStrategy(interval_strategy)
         if self.save_interval_strategy == interval_strategy and self.save_interval is not None:
             interval = trainer.history[interval_strategy.value]
 
@@ -202,7 +206,12 @@ class ModelCheckpoint(Callback):
         self.__select_candidates(candidates_list=self.all_interval_candidates)
 
 
-    def save_checkpoint(self, trainer, directory=None, filename_format="checkpoint.pt", **kwargs):
+    def save_checkpoint(self, 
+                        trainer, 
+                        directory: Optional[str] = None, 
+                        filename_format: str = "checkpoint.pt", 
+                        **kwargs
+                        ) -> Tuple[str, Dict[str, Any]]:
         if directory is None:
             directory = self.directory
 
@@ -225,7 +234,7 @@ class ModelCheckpoint(Callback):
 
         return checkpoint_path, checkpoint
 
-    def on_exception(self, trainer):
+    def on_exception(self, trainer) -> None:
         if self.save_checkpoint_on_exception:
             filename_format = "last_checkpoint_step_{step}_epoch_{epoch}.pt"
             checkpoint_path, checkpoint = self.save_checkpoint(trainer=trainer, filename_format=filename_format)

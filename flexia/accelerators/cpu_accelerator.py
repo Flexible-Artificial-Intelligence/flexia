@@ -16,7 +16,7 @@ class CPUAccelerator(Accelerator):
         self.virtual_memory = psutil.virtual_memory() # bytes
         self.__name = self.__get_processor_name()
     
-    def __get_processor_name(self):
+    def __get_processor_name(self) -> str:
         """
         https://stackoverflow.com/a/13078519
         """
@@ -36,7 +36,7 @@ class CPUAccelerator(Accelerator):
         return ""
     
     @property
-    def memory(self):
+    def memory(self) -> float:
         memory = convert_bytes(bytes=self.virtual_memory.total, from_unit="B", to_unit=self.unit)
         return memory
         

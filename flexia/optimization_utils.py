@@ -15,14 +15,22 @@ if is_bitsandbytes_available():
     from .bitsandbytes_utils import set_layers_precisions
 
 
-def __get_from_library(library, name, parameters, **kwargs):
+def __get_from_library(library:Any, 
+                       name:str, 
+                       parameters: Dict[str, Any], 
+                       **kwargs
+                       ) -> Any:
     instance = getattr(library, name)
     instance = instance(**kwargs, **parameters)
 
     return instance
 
 
-def get_scheduler(optimizer:Optimizer, name:str, parameters:dict={}, library="torch", *args, **kwargs) -> _LRScheduler:
+def get_scheduler(optimizer: Optimizer, 
+                  name: str, 
+                  parameters: Dict[str, Any] = {}, 
+                  library: Union[str, SchedulerLibrary] = "torch", 
+                  ) -> _LRScheduler:
     library = SchedulerLibrary(library)
 
     if library == SchedulerLibrary.TORCH:
@@ -42,12 +50,13 @@ def get_scheduler(optimizer:Optimizer, name:str, parameters:dict={}, library="to
     return scheduler
 
 
-def get_transformers_scheduler(optimizer:Optimizer, 
-                               name:str,
-                               num_training_steps:int,  
-                               parameters:dict={}, 
-                               warmup:Union[float, int]=0.0, 
-                               gradient_accumulation_steps:int=1):
+def get_transformers_scheduler(optimizer: Optimizer, 
+                               name: str,
+                               num_training_steps: int,  
+                               parameters: Dict[str, Any] = {}, 
+                               warmup: Union[float, int] = 0.0, 
+                               gradient_accumulation_steps: int = 1
+                               ) -> _LRScheduler:
 
     if is_transformers_available():
         # number of training steps relatively on gradient accumulation steps
@@ -77,7 +86,11 @@ def get_transformers_scheduler(optimizer:Optimizer,
         raise ValueError(f"Library `transformers` is not found.")
 
 
-def get_optimizer(module_parameters:Any, name:str, parameters:dict={}, library:str="torch") -> Optimizer:
+def get_optimizer(module_parameters: Any, 
+                  name: str, 
+                  parameters: Dict[str, Any] = {}, 
+                  library: Union[str, OptimizerLibrary] = "torch"
+                  ) -> Optimizer:
     library = OptimizerLibrary(library)
 
     if library == OptimizerLibrary.TORCH:
@@ -103,12 +116,13 @@ def get_optimizer(module_parameters:Any, name:str, parameters:dict={}, library:s
     return optimizer
 
 
-def get_bitsandbytes_optimizer(module:nn.Module, 
-                               name:str,
-                               module_parameters=None,  
-                               parameters:dict={}, 
-                               precisions=[32], 
-                               layers=[nn.Embedding]):
+def get_bitsandbytes_optimizer(module: nn.Module, 
+                               name: str,
+                               module_parameters: Optional[Any] = None,  
+                               parameters: Dict[str, Any] = {}, 
+                               precisions: List[int] = [32], 
+                               layers: List[nn.Module] = [nn.Embedding]
+                               ) -> Optimizer:
 
     if module_parameters is None:
         module_parameters = module.parameters()
@@ -123,7 +137,10 @@ def get_bitsandbytes_optimizer(module:nn.Module,
     return optimizer
 
 
-def get_lr(optimizer:Optimizer, only_last_group:bool=False, key:str="lr") -> Union[List[float], float]:
+def get_lr(optimizer: Optimizer, 
+           only_last_group: bool = False, 
+           key: str = "lr"
+           ) -> Union[List[float], float]:
     """
     Returns optimizer's learning rates for each or last group.
     """
@@ -136,14 +153,14 @@ def get_lr(optimizer:Optimizer, only_last_group:bool=False, key:str="lr") -> Uni
     return lrs[-1] if only_last_group else lrs
 
 
-def get_stepped_lrs(optimizer:Optimizer, 
-                    scheduler:Optional[_LRScheduler]=None, 
-                    steps:int=10, 
-                    steps_start:int=1,
-                    return_as_dict:bool=False,
-                    return_steps_list:bool=False,
-                    only_last_group:bool=False, 
-                    key:str="lr"
+def get_stepped_lrs(optimizer: Optimizer, 
+                    scheduler: Optional[_LRScheduler] = None, 
+                    steps: int = 10, 
+                    steps_start: int = 1,
+                    return_as_dict: bool = False,
+                    return_steps_list: bool = False,
+                    only_last_group: bool = False, 
+                    key: str = "lr"
                     ) -> Union[List[float], Dict[int, List[float]], Tuple[List[int]], Union[List[List[float]], Dict[int, List[float]]]]:
     
     steps = range(0+steps_start, steps+steps_start)

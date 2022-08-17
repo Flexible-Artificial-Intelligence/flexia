@@ -1,11 +1,11 @@
-from flexia.hooks.lambda_hook import LambdaHook
+from typing import List
+
 from .hook import Hook
 from .lambda_hook import LambdaHook
 
 
-
 class Hooks:
-    def __init__(self, hooks=[]):
+    def __init__(self, hooks: List[Hook] = []) -> None:
         self.hooks = hooks
 
         if isinstance(self.hooks, list):

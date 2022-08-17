@@ -8,7 +8,7 @@ from .enums import MemoryUnit
 from ..third_party.addict import Dict
 
 
-class Accelerator(ABC):
+class Device(ABC):
     def __init__(self, 
                 device: Optional[Union[str, torch.device]] = None, 
                 unit: Union[MemoryUnit, str] = "MB"

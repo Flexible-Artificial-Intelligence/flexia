@@ -4,12 +4,12 @@ import platform
 import subprocess
 import re
 
-from .accelerator import Accelerator
+from .device import Device
 from .utils import convert_bytes
 from ..device_utils import is_cpu_available
 
 
-class CPUAccelerator(Accelerator):
+class CPUDevice(Device):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         

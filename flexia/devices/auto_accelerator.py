@@ -7,7 +7,7 @@ from ..enums import DeviceType
 from .enums import MemoryUnit
 
 
-class AutoAccelerator:
+class AutoDevice:
     def __init__(self,
                  device: Optional[Union[str, torch.device]] = None, 
                  unit: Union[MemoryUnit, str] = "MB", 

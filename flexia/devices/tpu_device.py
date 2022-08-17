@@ -1,0 +1,2 @@
+class TPUDevice:
+    pass

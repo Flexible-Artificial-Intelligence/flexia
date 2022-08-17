@@ -17,7 +17,7 @@ import torch
 from torch import nn, optim
 from torch.cuda.amp import GradScaler
 from torch.optim import lr_scheduler
-from typing import Optional, Union, Any, Tuple, List
+from typing import Optional, Union, Any, Tuple, List, Dict as TypingDict
 from torch.utils.data import DataLoader
 from abc import ABC, abstractmethod
 import contextlib
@@ -38,7 +38,7 @@ from ..hooks.utils import run_hook, exception_handler
 from ..import_utils import is_torch_xla_available
 from ..callbacks import Callbacks
 from ..loggers import Loggers
-from ..accelerators import AutoAccelerator
+from ..devices import AutoDevice
 
 
 if is_torch_xla_available():
@@ -62,7 +62,7 @@ class Trainer(ABC):
                  precision: Union[Precision, str] = "fp32",
                  gradient_clipping_strategy: Union[GradientClippingStrategy, str] = "off",
                  gradient_clipping_value: Optional[float] = None, 
-                 accelerator:Optional[Union[str, torch.device]]="cpu:0", 
+                 device:Optional[Union[str, torch.device]]="cpu:0", 
                  validation_strategy: Union[IntervalStrategy, str] = "epoch",
                  validation_steps: Union[float, int] = 1, 
                  epochs: int = 1, 
@@ -82,7 +82,7 @@ class Trainer(ABC):
         self.precision = Precision(precision)
         self.gradient_clipping_strategy = GradientClippingStrategy(gradient_clipping_strategy)
         self.gradient_clipping_value = gradient_clipping_value
-        self.accelerator = AutoAccelerator(accelerator)
+        self.device = AutoDevice(device)
         self.validation_strategy = IntervalStrategy(validation_strategy)
         self.validation_steps = validation_steps
         self.scaler = scaler
@@ -142,8 +142,8 @@ class Trainer(ABC):
 
 
     def context_manager(self):
-        if self.accelerator.device_type != DeviceType.TPU:
-            manager = torch.autocast(device_type=self.accelerator.device_type.value, 
+        if self.device.device_type != DeviceType.TPU:
+            manager = torch.autocast(device_type=self.device.device_type.value, 
                                      dtype=self.precision_dtype, 
                                      enabled=self.use_amp)
         else:
@@ -152,11 +152,11 @@ class Trainer(ABC):
         return manager
 
     @property
-    def state(self):
+    def state(self) -> TrainerState:
         return self._state
 
     @state.setter
-    def state(self, value):
+    def state(self, value: TrainerState) -> None:
         if self.state != TrainerState.TRAINING_STOP:
             self._state = value
 
@@ -165,15 +165,16 @@ class Trainer(ABC):
     
     @exception_handler
     def train(self, 
-              train_loader:DataLoader, 
-              validation_loader:Optional[DataLoader]=None, 
-              return_validation_outputs:bool=True) -> tuple:
+              train_loader: DataLoader, 
+              validation_loader: Optional[DataLoader] = None, 
+              return_validation_outputs: bool = True
+              ) -> TypingDict[str, Any]:
         
         self.train_loader = train_loader
         self.validation_loader = validation_loader
 
         model = self.model
-        model.to(self.accelerator.device)
+        model.to(self.device.device)
         
         if self.validation_strategy == IntervalStrategy.EPOCH:
             self.validation_steps = math.ceil(len(self.train_loader) * self.validation_steps)
@@ -205,7 +206,6 @@ class Trainer(ABC):
 
             model.zero_grad(set_to_none=True)
             for step, batch in enumerate(self.train_loader, 1):
-                self.history["epoch"] = epoch
                 self.history["step"] += 1
                 self.history["step_epoch"] = step
 
@@ -228,8 +228,11 @@ class Trainer(ABC):
                 train_metrics.update(batch_metrics, n=batch_size)
                 epoch_train_metrics.update(batch_metrics, n=batch_size)
 
-                elapsed_epoch, remain_epoch = epoch_timer(step/steps)
-                elapsed, remain = timer(self.history["step"]/self.history["steps"])
+                epoch_fraction = step / steps
+                elapsed_epoch, remain_epoch = epoch_timer(epoch_fraction)
+
+                total_fraction = self.history["step"] / self.history["steps"]
+                elapsed, remain = timer(total_fraction)
 
                 self.history.update({
                     "train_loss": train_loss.average,
@@ -286,14 +289,14 @@ class Trainer(ABC):
         return self.history
 
 
-    def __update_history_data(self, data, key_format="train_{key}"):
+    def __update_history_data(self, data: TypingDict[str, Any], key_format: str = "train_{key}") -> None:
         new_data_dict = {key_format.format(key=key): value for key, value in data.items()}
         self.history.update(new_data_dict)
 
-    def get_lr(self):
+    def get_lr(self) -> float:
         return get_lr(optimizer=self.optimizer, only_last_group=True, key="lr")
 
-    def backward_step(self, loss:torch.Tensor) -> torch.Tensor:
+    def backward_step(self, loss: torch.Tensor) -> torch.Tensor:
         if self.__apply_gradient_scaling:
             self.scaler.scale(loss).backward()
         else:
@@ -302,13 +305,13 @@ class Trainer(ABC):
         return loss
     
 
-    def optimization_step(self, model) -> None:     
+    def optimization_step(self, model: nn.Module) -> None:     
         self.clip_gradients(model)
 
         if self.__apply_gradient_scaling:
             self.scaler.step(self.optimizer)
             self.scaler.update()
-        elif self.accelerator.device_type == DeviceType.TPU:
+        elif self.device.device_type == DeviceType.TPU:
             xm.optimizer_step(self.optimizer, barrier=True)
         else:
             self.optimizer.step()
@@ -316,7 +319,7 @@ class Trainer(ABC):
         model.zero_grad(set_to_none=True)
         
 
-    def scheduling_step(self, loss:Optional[torch.Tensor]=None, loop:str="training") -> None:
+    def scheduling_step(self, loss: Optional[torch.Tensor] = None, loop: str = "training") -> None:
         if self.scheduler is not None:
             if loop == "validation":
                 if isinstance(self.scheduler, lr_scheduler.ReduceLROnPlateau):
@@ -326,10 +329,17 @@ class Trainer(ABC):
                     self.scheduler.step()
 
                     
-    def train_one_step(self, model, batch:Any, step, steps) -> Tuple[torch.Tensor, dict]:
+    def train_one_step(self, 
+                       model:nn.Module, 
+                       batch:Any, 
+                       step: int, 
+                       steps: int,
+                       ) -> Tuple[torch.Tensor, TypingDict[str, Any]]:
         model.train()
         with self.context_manager():
             batch_loss, batch_metrics, *batch_outputs = self.training_step(model=model, batch=batch)
+            self.adversarial_step(model=model, batch=batch)
+
 
             if self.gradient_accumulation_steps > 1:
                 batch_loss /= self.gradient_accumulation_steps
@@ -344,9 +354,9 @@ class Trainer(ABC):
 
         return batch_loss.detach(), batch_metrics
                 
-    def clip_gradients(self, model) -> None:
+    def clip_gradients(self, model:nn.Module) -> None:
         if self.gradient_clipping_value is not None and self.gradient_clipping_strategy != GradientClippingStrategy.OFF:
-            if self.accelerator.device_type == DeviceType.TPU:
+            if self.device.device_type == DeviceType.TPU:
                 xm.reduce_gradients(self.optimizer)
 
             # unscaling gradients before gradient clipping
@@ -364,11 +374,15 @@ class Trainer(ABC):
 
     @exception_handler
     @torch.no_grad()
-    def validate(self, loader:DataLoader, return_validation_outputs=True, torchscript=False) -> Tuple[Any, dict]:
+    def validate(self, 
+                 loader: DataLoader, 
+                 return_validation_outputs: bool = True, 
+                 torchscript:bool = False,
+                 ) -> Tuple[Any, TypingDict[str, Any], Any]:
         self.validation_loader = loader
 
         model = self.model
-        model.to(self.accelerator.device)
+        model.to(self.device.device)
         model.eval()
 
         loss, metrics = Averager(), Averager()
@@ -420,7 +434,7 @@ class Trainer(ABC):
     
     @exception_handler
     @torch.no_grad()
-    def predict(self, loader:DataLoader, torchscript=False):
+    def predict(self, loader: DataLoader, torchscript: bool = False) -> Any:
         self.prediction_loader = loader      
         steps = len(self.prediction_loader)
         self.history["prediction_steps"] = steps
@@ -430,7 +444,7 @@ class Trainer(ABC):
         self.state = TrainerState.PREDICTION_START
         
         model = self.model
-        model.to(self.accelerator.device)
+        model.to(self.device.device)
         model.eval()
 
         for step, batch in enumerate(self.prediction_loader, 1):
@@ -458,18 +472,19 @@ class Trainer(ABC):
         return outputs
 
     @abstractmethod
-    def training_step(self, model, batch):
+    def training_step(self, model: nn.Module, batch: Any) -> Tuple[torch.Tensor, TypingDict[str, Any], Any]:
         pass
 
-    def validation_step(self, model, batch):
+    def validation_step(self, model: nn.Module, batch: Any) -> Tuple[torch.Tensor, TypingDict[str, Any], Any]:
         return self.training_step(model, batch)
 
-
-    def prediction_step(self, model, batch:Any):
+    def prediction_step(self,model: nn.Module, batch: Any) -> Any:
         pass
 
+    def adversarial_step(self, model: nn.Module, batch: Any) -> None:
+        pass
 
-    def on_validation_end(self, outputs) -> None:
+    def on_validation_end(self, outputs: Any) -> None:
         """
         Called when the validation loop ends.
         """

@@ -1,7 +1,7 @@
 from typing import Any
 import torch
 
-from .accelerator import Accelerator
+from .device import Device
 from .utils import convert_bytes
 from ..enums import DeviceType
 from ..import_utils import is_pynvml_available
@@ -13,7 +13,7 @@ if is_pynvml_available():
     nvmlInit()
 
 
-class GPUAccelerator(Accelerator):
+class GPUDevice(Device):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.nvml_info = self.__get_nvml_info(index=self.device_index)

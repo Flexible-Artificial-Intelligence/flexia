@@ -9,7 +9,7 @@ if is_torch_xla_available():
     import torch_xla.core.xla_model as xm
 
 
-def initialize_device(device: Optional[Union[torch.device, str]] = None):
+def initialize_device(device: Optional[Union[torch.device, str]] = None) -> torch.device:
     if device is None:
         if is_cuda_available():
             device = torch.device("cuda:0")

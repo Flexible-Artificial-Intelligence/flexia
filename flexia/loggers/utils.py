@@ -17,7 +17,7 @@ import logging
 from datetime import timedelta
 from typing import Any, Dict, Union, Optional
 
-from ..accelerators import Accelerator
+from ..devices import Device
 
 
 def get_logger(name: str = __name__, 
@@ -72,7 +72,7 @@ def get_time_from_timedelta(delta: timedelta) -> Dict[str, Union[int, float]]:
     return time
 
 
-def format_accelerator_stats(accelerator: Optional[Accelerator] = None, 
+def format_accelerator_stats(accelerator: Optional[Device] = None, 
                              sep:str = " - ", 
                              add_sep_before: bool = False
                              ) -> str:

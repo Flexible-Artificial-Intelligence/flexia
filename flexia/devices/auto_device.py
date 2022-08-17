@@ -19,29 +19,29 @@ class AutoDevice:
         self.device_index = self.device.index
         self.unit = MemoryUnit(unit)
         
-        self.__accelerator_name = f"{self.device_type.name}Accelerator"
-        self.__accelerator = globals()[self.__accelerator_name](device=self.device, *args, **kwargs) 
+        self.__device_name = f"{self.device_type.name}Accelerator"
+        self.__device = globals()[self.__device_name](device=self.device, *args, **kwargs) 
         
     @property
     def memory(self) -> float:
-        return self.__accelerator.memory
+        return self.__device.memory
     
     @property
     def memory_usage(self) -> float:
-        return self.__accelerator.memory_usage
+        return self.__device.memory_usage
     
     @property
     def memory_available(self) -> float:
-        return self.__accelerator.memory_available
+        return self.__device.memory_available
     
     @property
     def name(self) -> str:
-        return self.__accelerator.name
+        return self.__device.name
     
     @property
     def stats(self) -> Dict[str, Any]:
-        return self.__accelerator.stats
+        return self.__device.stats
     
     @property
     def is_available(self) -> bool:
-        return self.__accelerator.is_available
+        return self.__device.is_available

@@ -1,7 +1,7 @@
 from torch import nn, optim
 from torch.optim import Optimizer, lr_scheduler
 from torch.optim.lr_scheduler import _LRScheduler
-from typing import Any, Union, List, Tuple, Dict, Optional
+from typing import Any, Iterator, Union, List, Tuple, Dict, Optional, Iterator
 import numpy as np
 
 from .import_utils import is_transformers_available, is_bitsandbytes_available
@@ -14,6 +14,9 @@ if is_transformers_available():
 if is_bitsandbytes_available():
     import bitsandbytes as bnb
     from .bitsandbytes_utils import set_layers_precisions
+
+
+no_decay_parameters = ("bias", "LayerNorm.bias", "LayerNorm.weight")
 
 
 def __get_from_library(library:Any, 
@@ -138,6 +141,36 @@ def get_bitsandbytes_optimizer(module: nn.Module,
     return optimizer
 
 
+def get_optimizer_and_scheduler(module_parameters: Any,
+                                optimizer_name: str, 
+                                optimizer_parameters: Dict[str, Any] = {}, 
+                                optimizer_library: Union[str, OptimizerLibrary] = "torch", 
+                                scheduler_name: Optional[str] = None, 
+                                scheduler_parameters: Dict[str, Any] = {}, 
+                                scheduler_library: Union[str, SchedulerLibrary] = "torch",
+                                optimizer_kwargs: Dict[str, Any] = {},
+                                scheduler_kwargs: Dict[str, Any] = {},
+                                ) -> Tuple[Optimizer, Optional[_LRScheduler]]:
+
+    
+    optimizer = get_optimizer(module_parameters=module_parameters, 
+                              name=optimizer_name, 
+                              parameters=optimizer_parameters, 
+                              library=optimizer_library, 
+                              **optimizer_kwargs)
+
+    scheduler = None
+    if scheduler_name is not None:
+        scheduler = get_scheduler(optimizer=optimizer, 
+                                  name=scheduler_name, 
+                                  parameters=scheduler_parameters, 
+                                  library=scheduler_library, 
+                                  **scheduler_kwargs)
+
+    return optimizer, scheduler
+
+
+
 def get_lr(optimizer: Optimizer, 
            groups: Optional[Union[int, List[int]]] = None, 
            key: str = "lr",
@@ -169,9 +202,6 @@ def get_stepped_lrs(optimizer: Optimizer,
     
     steps = range(0+steps_start, steps+steps_start)
     
-    param_groups = optimizer.param_groups
-    num_param_groups = len(param_groups)
-    
     groups_lrs = {}
     for step in steps:
         groups_lr = get_lr(optimizer=optimizer, groups=groups, key=key)
@@ -192,3 +222,64 @@ def get_stepped_lrs(optimizer: Optimizer,
         return groups_lrs, steps
     
     return groups_lrs
+
+
+"""
+References:
+    https://github.com/affjljoo3581/CommonLit-Readability-Prize/blob/master/src/optimization/param_groups.py
+"""
+
+
+def get_decay_module_parameters(module: nn.Module, 
+                                no_decay_parameters: Iterator[str] = no_decay_parameters,
+                                recurse: bool = True,
+                                ) -> Iterator[nn.Parameter]:
+                                
+    for name, parameter in list(module.named_parameters(recurse=recurse)):
+        if name not in no_decay_parameters:
+            yield parameter
+
+            
+def get_no_decay_module_parameters(module: nn.Module, 
+                                   no_decay_parameters: Iterator[str] = no_decay_parameters,
+                                   recurse: bool = True,
+                                   ) -> Iterator[nn.Parameter]:
+
+    for name, parameter in list(module.named_parameters(recurse=recurse)):
+        if name in no_decay_parameters:
+            yield parameter
+
+
+def layerwise_learning_rate_decay(module: Union[Iterator[nn.Module], nn.Module], 
+                                  lr: float = 1e-3, 
+                                  layerwise_lr_decay: float = 0.1, 
+                                  weight_decay: float = 0.01, 
+                                  **kwargs,
+                                  ) -> Iterator[Dict[str, Any]]:
+    
+    if isinstance(module, nn.Module):
+        modules = reversed(list(module.modules()))
+    
+    for index, submodule in enumerate(modules):
+        submodule_layerwise_lr_decay = layerwise_lr_decay ** index
+        submodule_lr = lr * submodule_layerwise_lr_decay
+        
+        submodule_decay_parameters = get_decay_module_parameters(module=submodule, **kwargs)
+        num_submodule_decay_parameters = len(list(submodule_decay_parameters))
+        
+        if num_submodule_decay_parameters > 0:
+            yield {
+                "params": submodule_decay_parameters,
+                "lr": submodule_lr,
+                "weight_decay": weight_decay,
+            }
+            
+        submodule_no_decay_parameters = get_no_decay_module_parameters(module=submodule, **kwargs)
+        num_submodule_no_decay_parameters = len(list(submodule_no_decay_parameters))
+        
+        if num_submodule_no_decay_parameters > 0:
+            yield {
+                "params": submodule_no_decay_parameters,
+                "lr": submodule_lr,
+                "weight_decay": 0.0,
+            }

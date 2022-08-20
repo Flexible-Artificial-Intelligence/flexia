@@ -65,7 +65,7 @@ def plot_lr(optimizer: Optimizer,
     
 
     if isinstance(groups_indexes, int):
-        sns.lineplot(x=steps, y=group_lrs, label=group_legend, ax=ax)
+        sns.lineplot(x=steps, y=groups_lrs, ax=ax)
     else:
         for group_index, group_lrs in enumerate(groups_lrs):
             group_legend = group_legend_format.format(index=group_index)

@@ -283,3 +283,11 @@ def layerwise_learning_rate_decay(module: Union[Iterator[nn.Module], nn.Module],
                 "lr": submodule_lr,
                 "weight_decay": 0.0,
             }
+
+
+# Aliases
+get_decay_module_params = get_decay_module_parameters
+get_no_decay_module_params = get_decay_module_parameters
+llrd = layerwise_learning_rate_decay
+get_learning_rate = get_lr
+get_stepped_learning_rates = get_stepped_lrs

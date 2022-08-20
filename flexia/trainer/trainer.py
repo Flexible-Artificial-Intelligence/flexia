@@ -294,7 +294,9 @@ class Trainer(ABC):
         self.history.update(new_data_dict)
 
     def get_lr(self) -> float:
-        return get_lr(optimizer=self.optimizer, only_last_group=True, key="lr")
+        num_param_groups = len(self.optimizer.param_groups)
+        lr = get_lr(optimizer=self.optimizer, key="lr", groups=num_param_groups - 1)[0]
+        return lr
 
     def backward_step(self, loss: torch.Tensor) -> torch.Tensor:
         if self.__apply_gradient_scaling:

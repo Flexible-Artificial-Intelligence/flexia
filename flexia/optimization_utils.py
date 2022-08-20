@@ -139,28 +139,31 @@ def get_bitsandbytes_optimizer(module: nn.Module,
 
 
 def get_lr(optimizer: Optimizer, 
-           only_last_group: bool = False, 
-           key: str = "lr"
+           groups: Optional[Union[int, List[int]]] = None, 
+           key: str = "lr",
            ) -> Union[List[float], float]:
-    """
-    Returns optimizer's learning rates for each or last group.
-    """
 
     if not isinstance(optimizer, Optimizer):
         raise TypeError(f"The given `optimizer` type is not supported, it must be instance of Optimizer.")
+        
+    if isinstance(groups, int):
+        groups = [groups]
     
     param_groups = optimizer.param_groups
-    lrs = [param_group[key] for param_group in param_groups]        
-    return lrs[-1] if only_last_group else lrs
-
+    lrs = {param_group_index: param_group[key] for param_group_index, param_group in enumerate(param_groups)}
+    
+    if groups is not None:
+        lrs = {group_index: lrs[group_index] for group_index in groups}
+    
+    return lrs
 
 def get_stepped_lrs(optimizer: Optimizer, 
                     scheduler: Optional[_LRScheduler] = None, 
                     steps: int = 10, 
                     steps_start: int = 1,
-                    return_steps_list: bool = False,
-                    groups_indexes: Union[int, List[int]] = -1, 
-                    gradient_accumulation_steps=1,
+                    return_steps: bool = False,
+                    groups: Optional[Union[int, List[int]]] = None, 
+                    gradient_accumulation_steps: int = 1,
                     key: str = "lr"
                     ) -> Union[List[float], Dict[int, List[float]], Tuple[List[int]], Union[List[List[float]], Dict[int, List[float]]]]:
     
@@ -169,11 +172,14 @@ def get_stepped_lrs(optimizer: Optimizer,
     param_groups = optimizer.param_groups
     num_param_groups = len(param_groups)
     
-    groups_lrs = [[]]*num_param_groups
+    groups_lrs = {}
     for step in steps:
-        groups_lr = get_lr(optimizer, only_last_group=False, key=key)
+        groups_lr = get_lr(optimizer=optimizer, groups=groups, key=key)
         
-        for group_index, group_lr in enumerate(groups_lr):
+        for group_index, group_lr in groups_lr.items():
+            if step == steps_start:
+                groups_lrs[group_index] = []
+            
             groups_lrs[group_index].append(group_lr)
             
         if step % gradient_accumulation_steps == 0:
@@ -181,11 +187,8 @@ def get_stepped_lrs(optimizer: Optimizer,
             
             if scheduler is not None:
                 scheduler.step()
-        
-    groups_lrs = np.array(groups_lrs)
-    groups_lrs = groups_lrs[groups_indexes]
-
-    if return_steps_list:
-        return steps, groups_lrs
+    
+    if return_steps:
+        return groups_lrs, steps
     
     return groups_lrs

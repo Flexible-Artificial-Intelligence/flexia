@@ -41,38 +41,22 @@ def display_text(text: str,
 
 
 
-def plot_lr(optimizer: Optimizer, 
-            scheduler: Optional[_LRScheduler] = None, 
-            steps:int = 100, 
-            groups_indexes: Union[int, List[int]] = -1, 
-            key: str = "lr",
-            gradient_accumulation_steps=1,
-            group_legend_format="group #{index}",
-            ) -> None:
-            
-    steps, groups_lrs = get_stepped_lrs(optimizer=optimizer, 
-                                        scheduler=scheduler, 
-                                        steps=steps, 
-                                        steps_start=1, 
-                                        return_steps_list=True,
-                                        groups_indexes=groups_indexes, 
-                                        gradient_accumulation_steps=gradient_accumulation_steps,
-                                        key=key)
+def plot_lr(group_legend_format: str = "group #{index}", 
+            groups: Optional[Union[int, List[int]]] = None, 
+            **kwargs) -> None:
     
+    groups_lrs, steps = get_stepped_lrs(groups=groups, return_steps=True, **kwargs)
     
     figure = plt.figure()
     ax = figure.add_subplot()
     
-
-    if isinstance(groups_indexes, int):
-        sns.lineplot(x=steps, y=groups_lrs, ax=ax)
-    else:
-        for group_index, group_lrs in enumerate(groups_lrs):
-            group_legend = group_legend_format.format(index=group_index)
-            sns.lineplot(x=steps, y=group_lrs, label=group_legend, ax=ax)
+    for group_index, group_lrs in groups_lrs.items():
+        group_legend = group_legend_format.format(index=group_index)
+        sns.lineplot(x=steps, y=group_lrs, label=group_legend, ax=ax)
         
     ax.set_xlabel("step")
     ax.set_ylabel("learning rate")
-    figure.legend()    
+    ax.legend()
+    
     figure.tight_layout()
     figure.show()

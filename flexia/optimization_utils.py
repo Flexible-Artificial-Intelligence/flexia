@@ -2,6 +2,7 @@ from torch import nn, optim
 from torch.optim import Optimizer, lr_scheduler
 from torch.optim.lr_scheduler import _LRScheduler
 from typing import Any, Union, List, Tuple, Dict, Optional
+import numpy as np
 
 from .import_utils import is_transformers_available, is_bitsandbytes_available
 from .enums import OptimizerLibrary, SchedulerLibrary
@@ -157,9 +158,9 @@ def get_stepped_lrs(optimizer: Optimizer,
                     scheduler: Optional[_LRScheduler] = None, 
                     steps: int = 10, 
                     steps_start: int = 1,
-                    return_as_dict: bool = False,
                     return_steps_list: bool = False,
-                    only_last_group: bool = False, 
+                    groups_indexes: Union[int, List[int]] = -1, 
+                    gradient_accumulation_steps=1,
                     key: str = "lr"
                     ) -> Union[List[float], Dict[int, List[float]], Tuple[List[int]], Union[List[List[float]], Dict[int, List[float]]]]:
     
@@ -175,18 +176,15 @@ def get_stepped_lrs(optimizer: Optimizer,
         for group_index, group_lr in enumerate(groups_lr):
             groups_lrs[group_index].append(group_lr)
             
-        optimizer.step()
-        
-        if scheduler is not None:
-            scheduler.step()
+        if step % gradient_accumulation_steps == 0:
+            optimizer.step()
             
-    
-    if return_as_dict:
-        groups_lrs = {group_index: group_lrs for group_index, group_lrs in enumerate(groups_lrs)}
+            if scheduler is not None:
+                scheduler.step()
         
-    if only_last_group:
-        groups_lrs = groups_lrs[-1]
-        
+    groups_lrs = np.array(groups_lrs)
+    groups_lrs = groups_lrs[groups_indexes]
+
     if return_steps_list:
         return steps, groups_lrs
     

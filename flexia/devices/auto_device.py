@@ -19,7 +19,7 @@ class AutoDevice:
         self.device_index = self.device.index
         self.unit = MemoryUnit(unit)
         
-        self.__device_name = f"{self.device_type.name}Accelerator"
+        self.__device_name = f"{self.device_type.name}Device"
         self.__device = globals()[self.__device_name](device=self.device, *args, **kwargs) 
         
     @property

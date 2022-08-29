@@ -228,7 +228,7 @@ class ModelCheckpoint(Callback):
             step=trainer.history["step"], 
             epoch=trainer.history["epoch"],
             monitor_value=trainer.history[self.monitor_value], 
-            device_type=trainer.accelerator.device_type,
+            device_type=trainer.device.device_type,
             **kwargs
         )
 

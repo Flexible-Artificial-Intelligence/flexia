@@ -68,3 +68,20 @@ def replace_layer_with_other_layer(module: nn.Module,
                     
                 # Replaces `name` in `submodule` with `new_layer` (i.e newly initialized `other_layer_instnce`).
                 setattr(submodule, name, new_layer)
+
+
+def average_parameters(modules: List[nn.Module], weights: List[float]):
+    num_average_modules = len(modules)
+    
+    averaged_state_dict = None
+    for index, (module, weight) in enumerate(zip(modules, weights)):
+        module_state_dict = module.state_dict()
+
+        if averaged_state_dict is None and index == 0:
+            averaged_state_dict = module_state_dict
+        else:
+            for key, value in module_state_dict.items():
+                averaged_state_dict[key] += (value * weight) / num_average_modules
+
+    return averaged_state_dict
+    

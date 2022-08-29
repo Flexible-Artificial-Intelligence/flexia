@@ -33,7 +33,7 @@ from ..callbacks import Callback
 from ..optimization_utils import get_lr
 from ..utils import precision_dtypes, mixed_precision_dtypes, seed_everything
 from ..third_party.addict import Dict
-from ..enums import Precision, IntervalStrategy, DeviceType, GradientClippingStrategy, SchedulerLibrary
+from ..enums import Precision, IntervalStrategy, DeviceType, GradientClippingStrategy
 from ..hooks.utils import run_hook, exception_handler
 from ..import_utils import is_torch_xla_available
 from ..callbacks import Callbacks
@@ -433,45 +433,6 @@ class Trainer(ABC):
         self.state = TrainerState.VALIDATION_END
 
         return (loss.average, metrics.average, outputs)
-    
-    @exception_handler
-    @torch.no_grad()
-    def predict(self, loader: DataLoader, torchscript: bool = False) -> Any:
-        self.prediction_loader = loader      
-        steps = len(self.prediction_loader)
-        self.history["prediction_steps"] = steps
-        timer = Timer()
-        outputs = []
-
-        self.state = TrainerState.PREDICTION_START
-        
-        model = self.model
-        model.to(self.device.device)
-        model.eval()
-
-        for step, batch in enumerate(self.prediction_loader, 1):
-            self.history["prediction_step"] = step
-            
-            with self.context_manager():
-                self.state = TrainerState.PREDICTION_STEP_START
-
-                batch_outputs = self.prediction_step(model=model, batch=batch)
-
-                elapsed, remain = timer(self.history["prediction_step"]/self.history["prediction_steps"])
-                self.history.update({
-                    "prediction_elapsed": elapsed,
-                    "prediction_remain": remain,
-                })
-                    
-                self.state = TrainerState.PREDICTION_STEP_END
-
-                outputs.append(batch_outputs)
-                    
-        self.state = TrainerState.PREDICTION_END
-
-        gc.collect()
-    
-        return outputs
 
     @abstractmethod
     def training_step(self, model: nn.Module, batch: Any) -> Tuple[torch.Tensor, TypingDict[str, Any], Any]:
@@ -479,9 +440,6 @@ class Trainer(ABC):
 
     def validation_step(self, model: nn.Module, batch: Any) -> Tuple[torch.Tensor, TypingDict[str, Any], Any]:
         return self.training_step(model, batch)
-
-    def prediction_step(self,model: nn.Module, batch: Any) -> Any:
-        pass
 
     def adversarial_step(self, model: nn.Module, batch: Any) -> None:
         pass
@@ -496,4 +454,3 @@ class Trainer(ABC):
     # Aliases
     fit = train
     evaluate = validate
-    inference = predict

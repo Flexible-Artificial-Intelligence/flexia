@@ -1,3 +1,4 @@
+from tokenize import group
 from torch import nn, optim
 from torch.optim import Optimizer, lr_scheduler
 from torch.optim.lr_scheduler import _LRScheduler
@@ -284,6 +285,20 @@ def layerwise_learning_rate_decay(module: Union[Iterator[nn.Module], nn.Module],
                 "weight_decay": 0.0,
             }
 
+
+def get_parameter_groups(module: nn.Module, 
+                         weight_decay: float = 0.01,
+                         **kwargs
+                         ) -> List[Dict[str, Any]]:
+    decay_module_parameters = get_decay_module_parameters(module=module, **kwargs)
+    no_decay_parameters = get_no_decay_module_parameters(module=module, **kwargs)
+
+    groups = [
+        {"params": decay_module_parameters, "weight_decay": weight_decay},
+        {"params": no_decay_parameters, "weight_decay": 0.0},
+    ] 
+
+    return group 
 
 # Aliases
 get_decay_module_params = get_decay_module_parameters

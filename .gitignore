@@ -20,11 +20,11 @@ share/python-wheels/
 MANIFEST
 
 
-/flexia/trainer
-/flexia/nlp
-/flexia/loggers
-/flexia/hooks
-/flexia/devices
-/flexia/datasets
-/flexia/callbacks
-/flexia/adversarial_training
+flexia/trainer
+flexia/nlp
+flexia/loggers
+flexia/hooks
+flexia/devices
+flexia/datasets
+flexia/callbacks
+flexia/adversarial_training

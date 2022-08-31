@@ -18,3 +18,13 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+
+
+trainer
+nlp
+loggers
+hooks
+devices
+datasets
+callbacks
+adversarial_training
